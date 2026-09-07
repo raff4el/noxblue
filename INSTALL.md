@@ -25,7 +25,8 @@ git clone https://github.com/raff4el/noxblue && cd noxblue
 # 1. Trust the signing key
 run0 install -Dm644 cosign.pub /etc/pki/containers/noxblue.pub
 
-# 2. Declare that the repository carries sigstore attachments
+# 2. Declare that the repository carries sigstore attachments. Same path and
+#    content the image itself ships, so this is only pre-creating it.
 printf 'docker:\n  ghcr.io/raff4el/noxblue:\n    use-sigstore-attachments: true\n' \
   > /tmp/noxblue-registry.yaml
 run0 install -Dm644 /tmp/noxblue-registry.yaml \
@@ -54,13 +55,14 @@ Use `sudo` in place of `run0` if your image still has it.
 
 ### After the first boot
 
-Hand the files back to the image. ostree keeps local copies in `/etc`
-forever, so yours would otherwise shadow a rotated key:
+Hand the three files back to the image. ostree keeps local edits in `/etc`
+forever, so your copies would otherwise shadow a rotated key:
 
 ```bash
 run0 cp /usr/etc/containers/policy.json /etc/containers/policy.json
 run0 cp /usr/etc/pki/containers/noxblue.pub /etc/pki/containers/noxblue.pub
-run0 rm /etc/containers/registries.d/raff4el-noxblue.yaml /etc/containers/policy.json.bak
+run0 cp /usr/etc/containers/registries.d/raff4el-noxblue.yaml /etc/containers/registries.d/
+run0 rm /etc/containers/policy.json.bak
 run0 ostree admin config-diff | grep -E 'containers|pki'   # expect no output
 ```
 
