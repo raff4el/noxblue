@@ -21,8 +21,45 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 jobs:
+  validate:
+    # A KDL parse error in /etc/niri/config.kdl means no desktop at all on the
+    # next boot, and nothing in the image build would notice. Parse it with the
+    # same niri Fedora ships for the pinned release before building anything.
+    name: Validate configs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Parse TOML configs
+        run: |
+          set -euo pipefail
+          find files -name '*.toml' -print0 | xargs -0 python3 -c '
+          import sys, tomllib
+          for path in sys.argv[1:]:
+              with open(path, "rb") as f:
+                  tomllib.load(f)
+              print("ok", path)
+          '
+
+      - name: Parse niri config with the pinned Fedora release's niri
+        run: |
+          set -euo pipefail
+          # Read the release from the recipe so this cannot drift from the image.
+          ver=$(sed -n 's/^image-version:[[:space:]]*\([0-9][0-9]*\).*/\1/p' recipes/recipe.yml)
+          test -n "$ver" || { echo "could not read image-version from recipes/recipe.yml" >&2; exit 1; }
+          docker run --rm -v "$PWD:/src:ro" -w /src \
+            "registry.fedoraproject.org/fedora:$ver" \
+            bash -euo pipefail -c '
+              dnf -y -q install niri >/dev/null
+              niri --version
+              niri validate -c files/system/etc/niri/config.kdl
+            '
+
   bluebuild:
     name: Build Custom Image
+    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read

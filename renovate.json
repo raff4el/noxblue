@@ -24,5 +24,13 @@
       "datasourceTemplate": "docker",
       "versioningTemplate": "loose"
     }
+  ],
+  "packageRules": [
+    {
+      "description": "image-version and the hardcoded Terra release must move together, so land them in one PR rather than two that each break the build on their own.",
+      "matchManagers": ["custom.regex"],
+      "groupName": "Fedora release",
+      "groupSlug": "fedora-release"
+    }
   ]
 }

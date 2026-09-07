@@ -95,12 +95,26 @@ systemctl reboot
 
 Use `sudo` in place of `run0` if your image still has it.
 
-Once you are on noxblue and it works, hand `policy.json` back to the image, or
-ostree will keep your copy and stop applying updates to it — which matters the
-day the signing key rotates:
+Once you are on noxblue and it works, hand the files you touched back to the
+image. ostree keeps anything in `/etc` that differs from the deployment it came
+from, so your copies would otherwise shadow the image's forever — which matters
+the day the signing key rotates: the old key you pinned by hand would win over
+the new one the image ships, and updates would stop verifying.
+
+The image installs the same public key at the same path and its own
+`registries.d` entry, so nothing is lost:
 
 ```bash
+# Replace the edited policy.json and the pinned key with the image's copies.
+# Identical content today; the point is that ostree stops treating them as
+# local modifications.
 run0 cp /usr/etc/containers/policy.json /etc/containers/policy.json
+run0 cp /usr/etc/pki/containers/noxblue.pub /etc/pki/containers/noxblue.pub
+
+# The hand-written registries.d file and the backup are redundant now.
+run0 rm /etc/containers/registries.d/raff4el-noxblue.yaml \
+        /etc/containers/policy.json.bak
+
 run0 ostree admin config-diff | grep -E 'containers|pki'   # expect no output
 ```
 
