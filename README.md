@@ -2,7 +2,7 @@
 
 # noxblue
 
-**A hardened Fedora Atomic desktop: [secureblue](https://secureblue.dev) underneath, [niri](https://github.com/YaLTeR/niri) + [Noctalia](https://noctalia.dev) on top.**
+**[secureblue](https://secureblue.dev) underneath, [niri](https://github.com/YaLTeR/niri) + [Noctalia](https://noctalia.dev) on top.**
 
 [![build](https://github.com/raff4el/noxblue/actions/workflows/build.yml/badge.svg)](https://github.com/raff4el/noxblue/actions/workflows/build.yml)
 [![built with BlueBuild](https://img.shields.io/badge/built%20with-BlueBuild-blue)](https://blue-build.org/)
@@ -10,19 +10,11 @@
 
 </div>
 
----
-
-noxblue takes secureblue's hardened Fedora Atomic image and replaces the GNOME
-session with a scrollable-tiling one: **niri** as the compositor, **Noctalia** as
-the shell, and **greetd** + **noctalia-greeter** as the login screen.
-
-Noctalia v5 is a single native C++/OpenGL ES binary that provides the bar,
-launcher, notifications, clipboard history, lock screen, wallpapers, polkit
-agent, screenshot tools and settings UI. There is no bar daemon, no separate
-launcher and no notification daemon to configure — and, because it comes from
-Fedora's own repositories, **no COPRs are used at all**.
-
-## What's inside
+secureblue's hardened Fedora Atomic image with the GNOME session swapped for
+**niri** (compositor), **Noctalia** (shell) and **greetd + noctalia-greeter**
+(login). Noctalia is a single native binary covering bar, launcher,
+notifications, clipboard history, lock screen, wallpapers, polkit agent and
+screenshots, and it ships in Fedora's own repos: no COPRs.
 
 | | |
 | --- | --- |
@@ -31,44 +23,28 @@ Fedora's own repositories, **no COPRs are used at all**.
 | **Shell** | Noctalia 5 |
 | **Login** | greetd + noctalia-greeter |
 | **Terminal** | Alacritty, Nushell |
-| **Extras** | Homebrew (manual upgrades), Flatpak (Flathub system + user), zram tuned for desktop use |
+| **Extras** | Homebrew (manual upgrades), Flathub (system + user), zram tuned for desktop use |
 | **Flatpaks** | Flatseal, Warehouse, Mission Center, Clapper, Loupe |
-
-Screencast and file-chooser portals, `gnome-keyring`, `wireplumber`, `ddcutil`
-(external-monitor brightness) and `upower` are installed explicitly, because weak
-dependencies are turned off for the whole package set.
 
 ## Install
 
 > [!WARNING]
-> Rebasing to a custom image is [an experimental Fedora feature](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable).
-> Try it at your own discretion, and keep a way back — `rpm-ostree rollback`, or
-> a TTY, in case the graphical session does not come up.
+> Rebasing to a custom image is [experimental](https://www.fedoraproject.org/wiki/Changes/OstreeNativeContainerStable).
+> Keep `rpm-ostree rollback` and a TTY in mind in case the session does not come up.
 
-### Coming from secureblue
+### From secureblue
 
-secureblue ships a container policy of **`"default": [{"type": "reject"}]`**, and
-its `docker` transport rejects anything not explicitly listed. The usual
-BlueBuild "rebase unsigned first, then signed" dance therefore **does not work**
-— the unsigned pull is refused before it starts:
-
-```
-error: Preparing import: Fetching manifest: failed to invoke method OpenImage:
-Running image docker://ghcr.io/raff4el/noxblue:latest is rejected by policy.
-```
-
-Trust the image's key up front instead, and go straight to the signed rebase.
-This is the same key path, policy entry and registry config the image installs
-for itself, so nothing is loosened permanently — and unlike the unsigned route,
-you never run an unverified image.
+secureblue's container policy rejects anything not explicitly listed, so the
+usual "rebase unsigned, then signed" route fails before it starts. Trust the key
+first, then rebase signed directly:
 
 ```bash
 git clone https://github.com/raff4el/noxblue && cd noxblue
 
-# 1. Trust noxblue's signing key
+# 1. Trust the signing key
 run0 install -Dm644 cosign.pub /etc/pki/containers/noxblue.pub
 
-# 2. Note that this repository carries cosign sigstore attachments
+# 2. Declare that the repository carries sigstore attachments
 printf 'docker:\n  ghcr.io/raff4el/noxblue:\n    use-sigstore-attachments: true\n' \
   > /tmp/noxblue-registry.yaml
 run0 install -Dm644 /tmp/noxblue-registry.yaml \
@@ -95,32 +71,17 @@ systemctl reboot
 
 Use `sudo` in place of `run0` if your image still has it.
 
-Once you are on noxblue and it works, hand the files you touched back to the
-image. ostree keeps anything in `/etc` that differs from the deployment it came
-from, so your copies would otherwise shadow the image's forever — which matters
-the day the signing key rotates: the old key you pinned by hand would win over
-the new one the image ships, and updates would stop verifying.
-
-The image installs the same public key at the same path and its own
-`registries.d` entry, so nothing is lost:
+Once it works, hand the files back to the image. ostree keeps local copies in
+`/etc` forever, so yours would otherwise shadow a rotated key:
 
 ```bash
-# Replace the edited policy.json and the pinned key with the image's copies.
-# Identical content today; the point is that ostree stops treating them as
-# local modifications.
 run0 cp /usr/etc/containers/policy.json /etc/containers/policy.json
 run0 cp /usr/etc/pki/containers/noxblue.pub /etc/pki/containers/noxblue.pub
-
-# The hand-written registries.d file and the backup are redundant now.
-run0 rm /etc/containers/registries.d/raff4el-noxblue.yaml \
-        /etc/containers/policy.json.bak
-
+run0 rm /etc/containers/registries.d/raff4el-noxblue.yaml /etc/containers/policy.json.bak
 run0 ostree admin config-diff | grep -E 'containers|pki'   # expect no output
 ```
 
-### Coming from stock Fedora Atomic
-
-A permissive default policy allows the conventional two-step rebase:
+### From stock Fedora Atomic
 
 ```bash
 rpm-ostree rebase ostree-unverified-registry:ghcr.io/raff4el/noxblue:latest
@@ -129,26 +90,18 @@ rpm-ostree rebase ostree-image-signed:docker://ghcr.io/raff4el/noxblue:latest
 systemctl reboot
 ```
 
-`latest` follows the newest build, but stays on the Fedora release pinned in
-`recipes/recipe.yml`, so it will not carry you across a major version by
-surprise.
-
-### Verify the image
-
-Independently of any rebase:
-
-```bash
-cosign verify --key cosign.pub ghcr.io/raff4el/noxblue
-```
+`latest` follows new builds but stays on the Fedora release pinned in
+`recipes/recipe.yml`. Verify independently with
+`cosign verify --key cosign.pub ghcr.io/raff4el/noxblue`.
 
 ## Keybindings
 
-`Mod` is the Super key. These are the defaults in `/etc/niri/config.kdl`; press
-<kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> for niri's own overlay.
+`Mod` is Super. Defaults from `/etc/niri/config.kdl`;
+<kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd> shows niri's own overlay.
 
 | Key | Action |
 | --- | --- |
-| <kbd>Mod</kbd>+<kbd>Space</kbd> / <kbd>Mod</kbd>+<kbd>D</kbd> | Application launcher |
+| <kbd>Mod</kbd>+<kbd>Space</kbd> / <kbd>Mod</kbd>+<kbd>D</kbd> | Launcher |
 | <kbd>Mod</kbd>+<kbd>V</kbd> | Clipboard history |
 | <kbd>Mod</kbd>+<kbd>S</kbd> | Control Center |
 | <kbd>Mod</kbd>+<kbd>N</kbd> | Notifications |
@@ -162,100 +115,43 @@ cosign verify --key cosign.pub ghcr.io/raff4el/noxblue
 | <kbd>Mod</kbd>+<kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> or arrows | Move focus |
 | <kbd>Mod</kbd>+<kbd>Shift</kbd>+ same | Move window |
 | <kbd>Mod</kbd>+<kbd>1</kbd>…<kbd>9</kbd> | Switch workspace |
-| <kbd>Mod</kbd>+<kbd>R</kbd> / <kbd>F</kbd> / <kbd>Shift</kbd>+<kbd>F</kbd> | Cycle column width / maximize / fullscreen |
+| <kbd>Mod</kbd>+<kbd>R</kbd> / <kbd>F</kbd> / <kbd>Shift</kbd>+<kbd>F</kbd> | Column width / maximize / fullscreen |
 | <kbd>Print</kbd> | Screenshot (niri) |
 | <kbd>Shift</kbd>+<kbd>Print</kbd> | Screenshot region with annotation (Noctalia) |
 
-## Security trade-offs
+## Trade-offs vs stock secureblue
 
-noxblue departs from stock secureblue in ways worth knowing about before you
-rebase:
+- **Screencopy is unrestricted.** Under niri any `wlr-screencopy` client can
+  capture the whole desktop. This is the main property lost by leaving GNOME.
+- **Homebrew** pulls unsigned bottles outside the image's signing chain. The
+  index refreshes daily; packages only change on `brew upgrade`.
+- **Fonts** (Nerd Fonts, Google Fonts) are downloaded unsigned at build time.
+  Inter and Fira Code come from Fedora.
+- **Terra** supplies exactly one package at build time, `noctalia-greeter`,
+  restricted with `includepkgs`, GPG-checked and removed from the finished
+  image. See `files/dnf/terra.repo`.
+- **No Xwayland.** Add `xwayland-satellite` to the recipe for X11 apps.
+- **The login screen lists local accounts.** noctalia-greeter cannot hide them.
 
-- **Screencopy is not restricted.** secureblue only ships images for desktops
-  that secure privileged Wayland protocols (GNOME, KDE, Sway, COSMIC). Under
-  niri, any application speaking `wlr-screencopy` can capture the whole desktop,
-  including other applications' windows. This is the main property traded away
-  by swapping out GNOME.
-- **Homebrew is installed** — a second package manager pulling unsigned prebuilt
-  bottles, outside rpm-ostree and outside this image's signing chain. Its formula
-  index refreshes daily, but installed packages are only upgraded when you run
-  `brew upgrade` yourself. Some brew binaries also misbehave under
-  `hardened_malloc`.
-- **Fonts are fetched unsigned at build time.** The Nerd Fonts and Google Fonts
-  families come from plain archive downloads off GitHub and Google, with no
-  signature to check, unlike every package from dnf. The list is kept short for
-  that reason; `rsms-inter-fonts` and `fira-code-fonts` come from Fedora instead.
-- **One third-party repository is used at build time.** Fedora carries
-  `noctalia`, but not `noctalia-greeter`, which exists only in Fyra Labs'
-  [Terra](https://terra.fyralabs.com). `files/dnf/terra.repo` restricts Terra to
-  that single package with `includepkgs`, keeps `gpgcheck` and `repo_gpgcheck`
-  on, and pins it below Fedora by priority. `cleanup: true` then removes it from
-  the finished image, so it is not left behind as a trusted source for runtime
-  `rpm-ostree install`.
-- **Xwayland is not installed.** `xwayland-satellite` is a weak dependency of
-  niri and is deliberately excluded, so X11-only applications will not start.
-  Add it to `recipes/recipe.yml` if you need them.
-- **The login screen always lists local accounts.** noctalia-greeter has no
-  "hide the last username" option. Pinning `[user].default` in `greeter.toml`
-  opens straight on one account's password prompt, but that hides the picker,
-  not the other accounts.
-
-Weak dependencies are disabled for the package set, so niri does not silently
-drag in waybar/fuzzel/swaylock (redundant with Noctalia) or Xwayland. Everything
-actually needed is listed explicitly in the recipe.
+Weak dependencies are off for the whole package set; everything needed is
+listed explicitly in `recipes/recipe.yml`.
 
 ## Configuration
 
-### niri
+**niri.** `/etc/niri/config.kdl` is the system default. Extend it in
+`~/.config/niri/local.kdl` (included at the end) or replace it with
+`~/.config/niri/config.kdl`. The Noctalia-specific parts (startup spawn, the
+`honor-xdg-activation-with-invalid-serial` debug flag, the backdrop layer rule)
+are explained in the file.
 
-`/etc/niri/config.kdl` holds the system defaults. Either **add to them** by
-putting your bindings in `~/.config/niri/local.kdl`, which the system config
-includes at the end, or **replace them** with your own
-`~/.config/niri/config.kdl`, which niri prefers outright.
+**Noctalia.** Merges every `*.toml` in `~/.config/noctalia/`; GUI changes land
+in `~/.local/state/noctalia/settings.toml` and override them. The image ships
+`[shell] polkit_agent = true` via `/etc/skel`: secureblue has no `pkexec`, and
+`run0` needs an agent to show prompts outside a terminal. Accounts that existed
+before the rebase must copy `/etc/skel/.config/noctalia/config.toml` by hand.
 
-Three things in the system config are there for Noctalia specifically:
-`spawn-at-startup "noctalia"`, a `debug` flag
-(`honor-xdg-activation-with-invalid-serial`) without which notification actions
-and launcher window-focusing silently do nothing, and a `layer-rule` putting
-Noctalia's backdrop inside niri's overview.
-
-niri 26.04 also supports blur behind windows and layer surfaces. It is not
-enabled here; see [Noctalia's niri page](https://docs.noctalia.dev/noctalia/compositor-settings/niri/)
-for blocks to drop into `local.kdl`.
-
-### Noctalia
-
-Noctalia merges every `*.toml` in `~/.config/noctalia/`. Anything changed through
-the GUI lands in `~/.local/state/noctalia/settings.toml` and overrides your
-files — worth knowing when a hand-written value seems to be ignored.
-
-The image ships one setting via `/etc/skel`: `[shell] polkit_agent = true`.
-
-secureblue removes `sudo`, `su` and `pkexec` to eliminate suid-root binaries, and
-uses `run0` instead. polkit itself remains, and `run0` authorizes through it — so
-something still has to *display* the authorization prompt, and that something is
-a polkit authentication agent. Noctalia has one built in but leaves it off by
-default, assuming the desktop already supplies one. Nothing here does: gdm is
-disabled and GNOME's agent ships with gnome-shell. Turn it back off only if you
-run a different agent.
-
-Without an agent, `run0` still works from a terminal, where it prompts on the
-TTY. Anything launched from the shell with no controlling terminal has nowhere
-to put the prompt and fails silently.
-
-> [!IMPORTANT]
-> `/etc/skel` is only read when an account is created. If you rebased with an
-> existing account, copy `/etc/skel/.config/noctalia/config.toml` into
-> `~/.config/noctalia/` yourself or the polkit agent stays off.
-
-### Keyring
-
-`gnome-keyring` is installed and its daemon is socket-activated by the user
-session, so the secret service is available to browsers and Flatpaks. The login
-keyring is **unlocked at login** with the password you type into the greeter,
-the same as under gdm: Fedora's PAM stack for greetd already takes care of it,
-so this image does not touch `/etc/pam.d/greetd` (see *Login screen* for why PAM
-is not forked). To confirm on a running session:
+**Keyring.** Unlocked at login through greetd's PAM stack, same as under gdm.
+Confirm with:
 
 ```bash
 gdbus call --session -d org.freedesktop.secrets \
@@ -264,83 +160,35 @@ gdbus call --session -d org.freedesktop.secrets \
 # expect (<false>,)
 ```
 
-### Login screen
-
-greetd runs `noctalia-greeter-session`, which starts the greeter's own bundled
-wlroots compositor — there is no second compositor config to maintain. Note that
-`/etc/greetd/config.toml` uses `user = "greetd"`, the account Fedora's greetd
-package actually creates, rather than the `greeter` in upstream Noctalia's
-(Arch-oriented) documentation.
-
-The greeter has two config files in `/var/lib/noctalia-greeter/`:
-
-| File | Owner | Purpose |
-| --- | --- | --- |
-| `greeter.toml` | this image | Declarative settings. Wins wherever both files set the same key. |
-| `sync.toml` | the greeter | Last session, last colour scheme, and anything pushed by Noctalia's appearance sync. |
-
-`greeter.toml` is installed from
-`files/system/usr/share/noctalia-greeter-theme/greeter.toml` by `tmpfiles.d` with
-`C+`, so edits in this repo reach installed systems on the next boot — and hand
-edits on a running system get overwritten. Change `C+` to `C` in
-`files/system/usr/lib/tmpfiles.d/noctalia-greeter.conf` if you would rather
-configure it live. `sync.toml` is never touched either way.
-
-The greeter shows a solid black background and the built-in Noctalia palette by
-default. To change that, either set `[appearance.wallpaper] path` in
-`greeter.toml`, or set `scheme = "Synced"` and use **Settings → Security →
-Noctalia Greeter → Sync Now** to push the running session's wallpaper, palette
-and monitor layout to the login screen.
-
-It makes no network requests — there is no weather or location feature to turn
-off. User avatars come from AccountsService, which is not installed, so a generic
-icon is shown; add `accountsservice` to the recipe if you want them.
-
-> [!NOTE]
-> Appearance sync uses the **legacy** privilege path here, which escalates
-> through `run0`. Noctalia's newer *constrained* sync — the one that can be made
-> passwordless — has to launch `pkexec`, because the helper checks `PKEXEC_UID`,
-> and secureblue does not ship `pkexec`. That path needs greeter 1.5.0 or newer
-> anyway, and Terra currently packages 1.3.1, so it does not apply. If a future
-> greeter bump enables constrained sync, expect Sync Now to break and set
-> `[shell.greeter_sync] privilege_command` accordingly.
+**Login screen.** greetd runs `noctalia-greeter-session` as user `greetd`
+(Fedora's account, not upstream's `greeter`). State lives in
+`/var/lib/noctalia-greeter/`: `greeter.toml` is force-copied from
+`files/system/usr/share/noctalia-greeter-theme/` on every boot by tmpfiles.d,
+so edit the repo rather than the live file (or change `C+` to `C` in
+`files/system/usr/lib/tmpfiles.d/noctalia-greeter.conf`); `sync.toml` is the
+greeter's own state and is never touched. For a wallpaper set
+`[appearance.wallpaper] path`, or set `scheme = "Synced"` and use
+**Settings → Security → Noctalia Greeter → Sync Now**. Sync uses the legacy
+`run0` path; the constrained one needs `pkexec` and greeter ≥ 1.5, neither of
+which applies here. No AccountsService, so avatars are generic.
 
 > [!WARNING]
-> The greeter does **not** inherit the system keyboard layout — it uses the
-> `[keyboard]` block in `greeter.toml`, which defaults to US. On a non-US layout
-> you may be unable to type your password. Set `layout` there before rebooting
-> into it.
+> The greeter uses `[keyboard]` in `greeter.toml` (default US), not the system
+> layout. Set `layout` before rebooting on a non-US keyboard.
 
-## Building it yourself
+## Building
 
-Fork the repository, then see [BlueBuild's documentation](https://blue-build.org/how-to/setup/).
-You will need a cosign keypair and a `SIGNING_SECRET` repository secret; the
-public half in `cosign.pub` must be replaced with your own.
+Fork it, follow [BlueBuild's setup](https://blue-build.org/how-to/setup/),
+replace `cosign.pub` with your own key and add the private half as the
+`SIGNING_SECRET` secret. CI validates the niri config with the pinned release's
+own niri and parses the TOML files before every build. Install
+[Renovate](https://github.com/apps/renovate) on the fork; it bumps the base
+image and Terra release together and the Actions versions separately.
 
-Every build first runs `niri validate` on the system niri config, using the
-niri package from the Fedora release pinned in the recipe, and parses the TOML
-files under `files/`. A config that would leave you without a desktop fails CI
-instead of shipping.
-
-Updates are tracked by [Renovate](https://github.com/apps/renovate), which must
-be installed on the fork: it bumps the secureblue base tag and the pinned Terra
-release together in one PR, and the GitHub Actions versions separately.
-
-An offline ISO can be generated on a Fedora Atomic host — see
-[BlueBuild's ISO guide](https://blue-build.org/how-to/generate-iso/). ISOs are
-too large to distribute through GitHub releases.
-
-### Bumping the Fedora release
-
-`image-version` in `recipes/recipe.yml` and the hardcoded release in
-`files/dnf/terra.repo` must move together. Terra's own `.repo` file uses
-`$releasever`, which is not reliable on top of the secureblue base, so the
-release is pinned by hand.
-
-### No starship
-
-`starship` is not in Fedora's repositories, and this image uses no COPRs.
-Homebrew is installed, so `brew install starship` if you want the prompt.
+`image-version` in the recipe and the release in `files/dnf/terra.repo` must
+move together. An offline ISO can be built with
+[BlueBuild's ISO guide](https://blue-build.org/how-to/generate-iso/).
+`starship` is not in Fedora; `brew install starship`.
 
 ## Credits
 
