@@ -210,9 +210,18 @@ the GUI lands in `~/.local/state/noctalia/settings.toml` and overrides your
 files — worth knowing when a hand-written value seems to be ignored.
 
 The image ships one setting via `/etc/skel`: `[shell] polkit_agent = true`.
-Noctalia's polkit agent is off by default upstream because most desktops supply
-one; this image does not, since gdm is disabled and GNOME's agent ships with
-gnome-shell. Without it, polkit prompts fail with nothing on screen.
+
+secureblue removes `sudo`, `su` and `pkexec` to eliminate suid-root binaries, and
+uses `run0` instead. polkit itself remains, and `run0` authorizes through it — so
+something still has to *display* the authorization prompt, and that something is
+a polkit authentication agent. Noctalia has one built in but leaves it off by
+default, assuming the desktop already supplies one. Nothing here does: gdm is
+disabled and GNOME's agent ships with gnome-shell. Turn it back off only if you
+run a different agent.
+
+Without an agent, `run0` still works from a terminal, where it prompts on the
+TTY. Anything launched from the shell with no controlling terminal has nowhere
+to put the prompt and fails silently.
 
 > [!IMPORTANT]
 > `/etc/skel` is only read when an account is created. If you rebased with an
@@ -250,6 +259,15 @@ and monitor layout to the login screen.
 It makes no network requests — there is no weather or location feature to turn
 off. User avatars come from AccountsService, which is not installed, so a generic
 icon is shown; add `accountsservice` to the recipe if you want them.
+
+> [!NOTE]
+> Appearance sync uses the **legacy** privilege path here, which escalates
+> through `run0`. Noctalia's newer *constrained* sync — the one that can be made
+> passwordless — has to launch `pkexec`, because the helper checks `PKEXEC_UID`,
+> and secureblue does not ship `pkexec`. That path needs greeter 1.5.0 or newer
+> anyway, and Terra currently packages 1.3.1, so it does not apply. If a future
+> greeter bump enables constrained sync, expect Sync Now to break and set
+> `[shell.greeter_sync] privilege_command` accordingly.
 
 > [!WARNING]
 > The greeter does **not** inherit the system keyboard layout — it uses the

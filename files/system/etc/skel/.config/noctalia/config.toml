@@ -11,9 +11,19 @@
 # ~/.local/state/noctalia/settings.toml and override both.
 
 [shell]
-# Off by default upstream, on the assumption that the desktop already supplies a
-# polkit agent. This image has none: gdm is disabled and GNOME's agent ships
-# with gnome-shell, which is not running. Without this, anything needing
-# privilege escalation through polkit -- including the greeter's own appearance
-# sync -- fails with no visible prompt.
+# Register Noctalia's built-in polkit authentication agent.
+#
+# secureblue removes sudo, su and pkexec to get rid of suid-root binaries and
+# uses run0 instead. polkit itself is still there, and run0 authorizes through
+# it -- so something still has to display the prompt, and that something is an
+# authentication agent. Noctalia ships one but leaves it off, assuming the
+# desktop already supplies one; nothing here does, because gdm is disabled and
+# GNOME's agent comes with gnome-shell.
+#
+# DankMaterialShell registered an agent by default, so this is what preserves
+# the behaviour you had there. Without it run0 still works in a terminal, where
+# it prompts on the tty, but anything started from the shell with no
+# controlling terminal has nowhere to put the prompt.
+#
+# Set to false if you run a different agent.
 polkit_agent = true
