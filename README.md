@@ -251,25 +251,18 @@ to put the prompt and fails silently.
 ### Keyring
 
 `gnome-keyring` is installed and its daemon is socket-activated by the user
-session, so the secret service is available to browsers and Flatpaks. What may
-differ from GNOME is **unlocking at login**: gdm's PAM stack carries
-`pam_gnome_keyring.so`, which unlocks the login keyring with the password you
-just typed. greetd authenticates through `/etc/pam.d/greetd`, and this image does
-not modify that file (see *Login screen* for why PAM is not forked). Check
-whether the keyring came up unlocked:
+session, so the secret service is available to browsers and Flatpaks. The login
+keyring is **unlocked at login** with the password you type into the greeter,
+the same as under gdm: Fedora's PAM stack for greetd already takes care of it,
+so this image does not touch `/etc/pam.d/greetd` (see *Login screen* for why PAM
+is not forked). To confirm on a running session:
 
 ```bash
 gdbus call --session -d org.freedesktop.secrets \
   -o /org/freedesktop/secrets/collection/login \
   -m org.freedesktop.DBus.Properties.Get org.freedesktop.Secret.Collection Locked
-# (<false>,)  unlocked at login
-# (<true>,)   you will get a keyring password prompt on first use
+# expect (<false>,)
 ```
-
-If it is locked, the first application to ask for a secret prompts once per
-session. The fix would be a `pam_gnome_keyring.so` line in the greetd PAM
-service, which is a local edit to `/etc/pam.d/greetd` rather than something this
-image ships.
 
 ### Login screen
 
