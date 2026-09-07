@@ -1,0 +1,346 @@
+// System default for secureblue Niri + Noctalia.
+// Personal overrides belong in ~/.config/niri/config.kdl, or -- to keep these
+// defaults and only add to them -- in ~/.config/niri/local.kdl (see the include
+// at the bottom of this file).
+//
+// Note: xwayland-satellite is deliberately not installed, so X11-only clients
+// will not start. See the security notes in the repo README.
+
+input {
+    keyboard {
+        xkb {
+        }
+        numlock
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+    }
+}
+
+environment {
+    XDG_CURRENT_DESKTOP "niri"
+    // Some applications read this directly rather than asking logind. greetd
+    // itself does not set a session type, so without this they can conclude
+    // they are on a tty. This does not change what `loginctl` reports -- for
+    // that you would have to add
+    //   auth required pam_env.so envfile=/etc/greetd/session-environment
+    // to /etc/pam.d/greetd, which means shipping a fork of Fedora's PAM stack
+    // for greetd and never getting upstream changes to it again.
+    XDG_SESSION_TYPE "wayland"
+    QT_QPA_PLATFORM "wayland"
+    ELECTRON_OZONE_PLATFORM_HINT "auto"
+    QT_QPA_PLATFORMTHEME "gtk3"
+    QT_QPA_PLATFORMTHEME_QT6 "gtk3"
+}
+
+// Start Noctalia directly from niri. Noctalia does not manage its own session
+// autostart, and there is no shipped user service to enable instead.
+spawn-at-startup "noctalia"
+
+// No clipboard-watcher spawn here: Noctalia keeps clipboard history itself,
+// so the wl-paste/cliphist pair the DankMaterialShell image needed is gone.
+
+prefer-no-csd
+
+// Only used by niri's own Print bindings below. Noctalia's screenshot IPC has
+// its own output policy under [shell.screenshot] in ~/.config/noctalia/.
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+debug {
+    // Lets Noctalia's notification actions raise the app that sent the
+    // notification, and lets its launcher focus an already-running window.
+    // Without this those clicks silently do nothing.
+    honor-xdg-activation-with-invalid-serial
+}
+
+layout {
+    gaps 8
+
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width {
+        proportion 0.5
+    }
+
+    focus-ring {
+        width 2
+    }
+
+    border {
+        off
+    }
+}
+
+window-rule {
+    geometry-corner-radius 20
+    clip-to-geometry true
+}
+
+// Noctalia's Settings window is a regular toplevel, not a layer surface, so
+// without this it lands in the tiling layout at whatever width is next.
+window-rule {
+    match app-id="dev.noctalia.Noctalia"
+    open-floating true
+    default-column-width { fixed 1080; }
+    default-window-height { fixed 920; }
+}
+
+// Put Noctalia's blurred, tinted copy of the wallpaper behind the workspaces so
+// it shows through in the overview. Requires the [niri/backdrop] section to be
+// enabled in ~/.config/noctalia/ -- it is on by default.
+layer-rule {
+    match namespace="^noctalia-backdrop"
+    place-within-backdrop true
+}
+
+binds {
+    // Noctalia
+    Mod+Space hotkey-overlay-title="Application Launcher" {
+        spawn "noctalia" "msg" "panel-toggle" "launcher";
+    }
+
+    // Your Hyprland muscle memory.
+    Mod+D hotkey-overlay-title="Application Launcher" {
+        spawn "noctalia" "msg" "panel-toggle" "launcher";
+    }
+
+    Mod+V hotkey-overlay-title="Clipboard History" {
+        spawn "noctalia" "msg" "panel-toggle" "clipboard";
+    }
+
+    Mod+S hotkey-overlay-title="Control Center" {
+        spawn "noctalia" "msg" "panel-toggle" "control-center";
+    }
+
+    Mod+Comma hotkey-overlay-title="Settings" {
+        spawn "noctalia" "msg" "settings-toggle";
+    }
+
+    Mod+X hotkey-overlay-title="Session Menu" {
+        spawn "noctalia" "msg" "panel-toggle" "session";
+    }
+
+    Mod+N hotkey-overlay-title="Notifications" {
+        spawn "noctalia" "msg" "panel-toggle" "control-center" "notifications";
+    }
+
+    Mod+W hotkey-overlay-title="Wallpaper Picker" {
+        spawn "noctalia" "msg" "panel-toggle" "wallpaper";
+    }
+
+    Super+Alt+L hotkey-overlay-title="Lock" {
+        spawn "noctalia" "msg" "session" "lock";
+    }
+
+    // Terminal
+    Mod+T hotkey-overlay-title="Terminal" {
+        spawn "alacritty";
+    }
+
+    // Niri overview
+    Mod+O repeat=false {
+        toggle-overview;
+    }
+
+    Mod+Tab repeat=false {
+        toggle-overview;
+    }
+
+    Mod+Shift+Slash {
+        show-hotkey-overlay;
+    }
+
+    // Windows
+    Mod+Q repeat=false {
+        close-window;
+    }
+
+    Mod+Left {
+        focus-column-left;
+    }
+
+    Mod+Down {
+        focus-window-down;
+    }
+
+    Mod+Up {
+        focus-window-up;
+    }
+
+    Mod+Right {
+        focus-column-right;
+    }
+
+    Mod+H {
+        focus-column-left;
+    }
+
+    Mod+J {
+        focus-window-down;
+    }
+
+    Mod+K {
+        focus-window-up;
+    }
+
+    Mod+L {
+        focus-column-right;
+    }
+
+    Mod+Shift+Left {
+        move-column-left;
+    }
+
+    Mod+Shift+Down {
+        move-window-down;
+    }
+
+    Mod+Shift+Up {
+        move-window-up;
+    }
+
+    Mod+Shift+Right {
+        move-column-right;
+    }
+
+    Mod+Shift+H {
+        move-column-left;
+    }
+
+    Mod+Shift+J {
+        move-window-down;
+    }
+
+    Mod+Shift+K {
+        move-window-up;
+    }
+
+    Mod+Shift+L {
+        move-column-right;
+    }
+
+    // Workspaces
+    Mod+Page_Down {
+        focus-workspace-down;
+    }
+
+    Mod+Page_Up {
+        focus-workspace-up;
+    }
+
+    Mod+Shift+Page_Down {
+        move-column-to-workspace-down;
+    }
+
+    Mod+Shift+Page_Up {
+        move-column-to-workspace-up;
+    }
+
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+
+    // Column sizing
+    Mod+R {
+        switch-preset-column-width;
+    }
+
+    Mod+F {
+        maximize-column;
+    }
+
+    Mod+Shift+F {
+        fullscreen-window;
+    }
+
+    // Screenshots.
+    // Niri's own screenshot UI on Print, Noctalia's annotating one on Shift.
+    // Both go through wlr-screencopy -- see the README's security notes.
+    Print {
+        screenshot;
+    }
+
+    Ctrl+Print {
+        screenshot-screen;
+    }
+
+    Alt+Print {
+        screenshot-window;
+    }
+
+    Shift+Print hotkey-overlay-title="Screenshot Region (Noctalia)" {
+        spawn "noctalia" "msg" "screenshot-region";
+    }
+
+    // Media keys through Noctalia, so its OSD shows the change.
+    XF86AudioRaiseVolume allow-when-locked=true {
+        spawn "noctalia" "msg" "volume-up" "3";
+    }
+
+    XF86AudioLowerVolume allow-when-locked=true {
+        spawn "noctalia" "msg" "volume-down" "3";
+    }
+
+    XF86AudioMute allow-when-locked=true {
+        spawn "noctalia" "msg" "volume-mute";
+    }
+
+    XF86AudioMicMute allow-when-locked=true {
+        spawn "noctalia" "msg" "mic-mute";
+    }
+
+    XF86MonBrightnessUp allow-when-locked=true {
+        spawn "noctalia" "msg" "brightness-up" "current" "5";
+    }
+
+    XF86MonBrightnessDown allow-when-locked=true {
+        spawn "noctalia" "msg" "brightness-down" "current" "5";
+    }
+
+    XF86AudioPlay allow-when-locked=true {
+        spawn "noctalia" "msg" "media" "toggle";
+    }
+
+    XF86AudioNext allow-when-locked=true {
+        spawn "noctalia" "msg" "media" "next";
+    }
+
+    XF86AudioPrev allow-when-locked=true {
+        spawn "noctalia" "msg" "media" "previous";
+    }
+}
+
+// Per-user overrides layered on top of these system defaults.
+//
+// Requires niri >= 25.11 for `include`, and >= 26.04 for `~` expansion.
+// Fedora 44 ships 26.04, so this is fine -- but a parse error here means no
+// desktop at all, so re-check this line when changing the base image version.
+include optional=true "~/.config/niri/local.kdl"

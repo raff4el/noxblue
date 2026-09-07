@@ -1,0 +1,23 @@
+# greetd hands the session to noctalia-greeter-session, a wrapper that starts
+# the bundled wlroots compositor (noctalia-greeter-compositor) and runs the
+# greeter inside it. Do NOT point `command` at the `noctalia-greeter` binary
+# directly -- it is not a compositor and will not come up on its own.
+#
+# Unlike DankMaterialShell's greeter, this needs no separate compositor config
+# file, so there is no /etc/greetd/niri.kdl here.
+[terminal]
+vt = 1
+
+[default_session]
+command = "/usr/bin/noctalia-greeter-session"
+# Fedora's greetd package creates the `greetd` system user via sysusers.d and
+# owns /var/lib/greetd. Upstream Noctalia docs say `greeter`, which is the Arch
+# convention -- on Fedora that user does not exist and greetd would fail to
+# start. noctalia-greeter reads the user back out of this file, so the greeter
+# state directory in tmpfiles.d must be owned by whatever is set here.
+user = "greetd"
+
+# To skip the session picker and always preselect niri, use instead:
+#   command = "/usr/bin/noctalia-greeter-session -- --session niri"
+# The value is the desktop entry's `Name=`, not the .desktop filename.
+# `noctalia-greeter sessions` lists the valid names.

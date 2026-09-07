@@ -1,0 +1,57 @@
+# Declarative, administrator-controlled greeter config. Installed to
+# /var/lib/noctalia-greeter/greeter.toml by tmpfiles.d on every boot; see
+# files/system/usr/lib/tmpfiles.d/noctalia-greeter.conf.
+#
+# Anything set here wins over the greeter's own sync.toml, so keep this file to
+# the things the image should actually pin. Everything left out stays
+# user-controlled: the greeter remembers the last selected session and colour
+# scheme in sync.toml, and Noctalia's Settings -> Security -> Sync Now can push
+# the desktop's wallpaper and palette here.
+
+# No [session].default and no [user].default: the greeter falls back to the
+# remembered session and shows the user picker. Uncomment to pin either.
+# The session value is the desktop entry's `Name=`, which
+# `noctalia-greeter sessions` prints -- not the .desktop filename.
+#[session]
+#default = "Niri"
+#
+#[user]
+#default = "alice"
+
+[appearance]
+# "Noctalia" is the built-in palette. Set to "Synced" instead if you run
+# Settings -> Security -> Noctalia Greeter -> Sync Now and want the login
+# screen to follow the desktop's wallpaper-derived colours.
+scheme = "Noctalia"
+theme_mode = "dark"
+
+[appearance.wallpaper]
+# Solid black. Note that this is read literally, unlike dms-greeter, which only
+# ever loaded a wallpaper from one hardcoded filename. To use an image, give an
+# absolute path here and install it via the commented line in
+# files/system/usr/lib/tmpfiles.d/noctalia-greeter.conf.
+path = "color:#000000"
+
+[keyboard]
+# Matches the `numlock` in /etc/niri/config.kdl, so the state does not flip
+# between the login screen and the desktop.
+numlock = true
+
+[auth]
+# Reject an empty password rather than handing it to PAM. Only set this to true
+# if you deliberately use a PAM stack that expects empty submissions, such as
+# fprintd or a smartcard -- neither is configured in this image.
+allow_empty_password = false
+
+[idle]
+# Blank the outputs after five minutes sitting at the login screen. `0` would
+# disable blanking entirely.
+timeout = 300
+
+# The greeter makes no network requests: it has no weather or location feature
+# to disable, unlike dms-greeter.
+#
+# Note that there is no "hide the last username" option here. The greeter
+# always lists local accounts. If that matters to you, pin [user].default above
+# so the greeter opens straight on one account's password prompt -- but be
+# aware that this hides the picker, it does not hide the other accounts.

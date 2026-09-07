@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "customManagers": [
+    {
+      "description": "Track the secureblue base image tag in recipe.yml",
+      "customType": "regex",
+      "managerFilePatterns": ["/^recipes/.+\\.ya?ml$/"],
+      "matchStrings": [
+        "base-image:\\s*(?<depName>\\S+)[\\s\\S]*?image-version:\\s*(?<currentValue>\\d+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose"
+    },
+    {
+      "description": "Flag every hardcoded Terra release so they get bumped alongside image-version. Appears in files/dnf/terra.repo (baseurl and gpgkey) and in the recipe's repos.keys URL.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^files/dnf/.+\\.repo$/",
+        "/^recipes/.+\\.ya?ml$/"
+      ],
+      "matchStrings": ["repos\\.fyralabs\\.com/terra(?<currentValue>\\d+)"],
+      "depNameTemplate": "fedora",
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "loose"
+    }
+  ]
+}
