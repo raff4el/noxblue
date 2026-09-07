@@ -1,0 +1,15 @@
+# System defaults for GTK applications. Nothing in this session runs
+# gnome-settings-daemon, so GTK reads org.gnome.desktop.interface straight
+# from GSettings, and without a value it falls back to light Adwaita.
+#
+# GTK 4 / libadwaita apps follow color-scheme. GTK 3 apps (Thunar, most of
+# the Sway Atomic base) ignore it and need a dark theme name; adw-gtk3-dark
+# is the Adwaita look ported to GTK 3, installed by secureblue and listed in
+# the recipe.
+#
+# These are only defaults: a per-user value wins, and Noctalia's GTK 3 /
+# GTK 4 templates (Settings -> Templates) set exactly these keys to follow
+# its own light/dark mode.
+[org.gnome.desktop.interface]
+color-scheme='prefer-dark'
+gtk-theme='adw-gtk3-dark'

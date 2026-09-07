@@ -40,6 +40,15 @@ Merges every `*.toml` in `~/.config/noctalia/`; GUI changes land in
 `[shell] polkit_agent = true` via `/etc/skel`: secureblue has no `pkexec`, and
 `run0` needs an agent to show prompts outside a terminal.
 
+## GTK applications
+
+No gnome-settings-daemon runs here, so GTK apps read
+`org.gnome.desktop.interface` from GSettings directly. The image defaults
+`color-scheme` to `prefer-dark` and `gtk-theme` to `adw-gtk3-dark`, which
+covers both GTK 4 apps and GTK 3 ones like Thunar. To have them follow
+Noctalia's own light/dark mode instead, enable the **GTK 3** and **GTK 4**
+templates under **Settings → Templates**; they set the same keys per user.
+
 ## Keyring
 
 Unlocked at login through greetd's PAM stack, the way gdm does it. Confirm:

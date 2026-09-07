@@ -88,6 +88,9 @@ modules:
         # rather than "Fira Code"), which is why both are present.
         - rsms-inter-fonts
         - fira-code-fonts
+        # GTK 3 theme matching Adwaita dark. secureblue installs it on this
+        # base already; listed so the gschema default below never dangles.
+        - adw-gtk3-theme
         # Userland
         - nu
         - alacritty
@@ -109,6 +112,11 @@ modules:
     #   packages:
     #     - sddm
     #     - sddm-wayland-sway
+  # Dark GTK defaults (color-scheme + adw-gtk3-dark). See the comments in
+  # files/gschema-overrides/zz1-noxblue.gschema.override.
+  - type: gschema-overrides
+    include:
+      - zz1-noxblue.gschema.override
   - type: systemd
     system:
       enabled:
