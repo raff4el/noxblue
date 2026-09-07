@@ -117,6 +117,11 @@ modules:
         # Sway Atomic's display manager. It and greetd both alias
         # display-manager.service, so exactly one may be enabled.
         - sddm.service
+        # secureblue's homebrew RPM enables a daily `brew upgrade`. Bottles
+        # are unsigned binaries outside this image's signing chain, so
+        # upgrading them stays a deliberate manual step. The index refresh
+        # (brew-update.timer) is left on.
+        - brew-upgrade.timer
   # No `brew` module: secureblue's desktop images already ship Homebrew as
   # RPMs (`homebrew` + `brew-proxy`, mediated through a DBus service). The
   # BlueBuild module installed a second copy at the same prefix with its own
