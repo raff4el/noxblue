@@ -45,14 +45,72 @@ dependencies are turned off for the whole package set.
 > Try it at your own discretion, and keep a way back — `rpm-ostree rollback`, or
 > a TTY, in case the graphical session does not come up.
 
-From any existing Fedora Atomic install:
+### Coming from secureblue
+
+secureblue ships a container policy of **`"default": [{"type": "reject"}]`**, and
+its `docker` transport rejects anything not explicitly listed. The usual
+BlueBuild "rebase unsigned first, then signed" dance therefore **does not work**
+— the unsigned pull is refused before it starts:
+
+```
+error: Preparing import: Fetching manifest: failed to invoke method OpenImage:
+Running image docker://ghcr.io/raff4el/noxblue:latest is rejected by policy.
+```
+
+Trust the image's key up front instead, and go straight to the signed rebase.
+This is the same key path, policy entry and registry config the image installs
+for itself, so nothing is loosened permanently — and unlike the unsigned route,
+you never run an unverified image.
 
 ```bash
-# 1. Rebase unsigned first, to pull in the signing keys and policy
+git clone https://github.com/raff4el/noxblue && cd noxblue
+
+# 1. Trust noxblue's signing key
+run0 install -Dm644 cosign.pub /etc/pki/containers/noxblue.pub
+
+# 2. Note that this repository carries cosign sigstore attachments
+printf 'docker:\n  ghcr.io/raff4el/noxblue:\n    use-sigstore-attachments: true\n' \
+  > /tmp/noxblue-registry.yaml
+run0 install -Dm644 /tmp/noxblue-registry.yaml \
+  /etc/containers/registries.d/raff4el-noxblue.yaml
+
+# 3. Add the policy entry
+python3 - <<'PY'
+import json, pathlib
+p = json.loads(pathlib.Path('/etc/containers/policy.json').read_text())
+p['transports']['docker']['ghcr.io/raff4el/noxblue'] = [{
+    'type': 'sigstoreSigned',
+    'keyPath': '/etc/pki/containers/noxblue.pub',
+    'signedIdentity': {'type': 'matchRepository'},
+}]
+pathlib.Path('/tmp/policy.json').write_text(json.dumps(p, indent=4) + '\n')
+PY
+run0 cp /etc/containers/policy.json /etc/containers/policy.json.bak
+run0 install -Dm644 /tmp/policy.json /etc/containers/policy.json
+
+# 4. Rebase
+run0 -i rpm-ostree rebase ostree-image-signed:docker://ghcr.io/raff4el/noxblue:latest
+systemctl reboot
+```
+
+Use `sudo` in place of `run0` if your image still has it.
+
+Once you are on noxblue and it works, hand `policy.json` back to the image, or
+ostree will keep your copy and stop applying updates to it — which matters the
+day the signing key rotates:
+
+```bash
+run0 cp /usr/etc/containers/policy.json /etc/containers/policy.json
+run0 ostree admin config-diff | grep -E 'containers|pki'   # expect no output
+```
+
+### Coming from stock Fedora Atomic
+
+A permissive default policy allows the conventional two-step rebase:
+
+```bash
 rpm-ostree rebase ostree-unverified-registry:ghcr.io/raff4el/noxblue:latest
 systemctl reboot
-
-# 2. Then rebase to the signed image
 rpm-ostree rebase ostree-image-signed:docker://ghcr.io/raff4el/noxblue:latest
 systemctl reboot
 ```
@@ -62,6 +120,8 @@ systemctl reboot
 surprise.
 
 ### Verify the image
+
+Independently of any rebase:
 
 ```bash
 cosign verify --key cosign.pub ghcr.io/raff4el/noxblue
