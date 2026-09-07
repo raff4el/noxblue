@@ -10,20 +10,20 @@
 
 </div>
 
-secureblue's hardened Fedora Atomic image with the GNOME session swapped for
-**niri** (compositor), **Noctalia** (shell) and **greetd + noctalia-greeter**
-(login). Noctalia is a single native binary covering bar, launcher,
+secureblue's hardened Fedora Sway Atomic image with the Sway session swapped
+for **niri** (compositor), **Noctalia** (shell) and **greetd +
+noctalia-greeter** (login). Noctalia is a single native binary covering bar, launcher,
 notifications, clipboard history, lock screen, wallpapers, polkit agent and
 screenshots, and it ships in Fedora's own repos: no COPRs.
 
 | | |
 | --- | --- |
-| **Base** | secureblue `silverblue-main-hardened`, Fedora 44 |
+| **Base** | secureblue `sericea-main-hardened` (Fedora Sway Atomic 44) |
 | **Compositor** | niri 26.04 |
 | **Shell** | Noctalia 5 |
 | **Login** | greetd + noctalia-greeter |
 | **Terminal** | Alacritty, Nushell |
-| **Extras** | Homebrew (manual upgrades), Flathub (system + user), zram tuned for desktop use |
+| **Extras** | Homebrew (secureblue's `brew-proxy`), Flathub (system + user), zram tuned for desktop use |
 | **Flatpaks** | Flatseal, Warehouse, Mission Center, Clapper, Loupe |
 
 ## Install
@@ -122,9 +122,15 @@ systemctl reboot
 ## Trade-offs vs stock secureblue
 
 - **Screencopy is unrestricted.** Under niri any `wlr-screencopy` client can
-  capture the whole desktop. This is the main property lost by leaving GNOME.
-- **Homebrew** pulls unsigned bottles outside the image's signing chain. The
-  index refreshes daily; packages only change on `brew upgrade`.
+  capture the whole desktop. secureblue's Sway image blanks the wlr screencast
+  portal for this reason, but that only covers Sway's portal config, not
+  niri's. This is the main property lost by swapping the session.
+- **Sway is still on the image.** The base's own session (sway, sddm, waybar,
+  foot, swaylock) is installed but never started. Removing it is an opt-in
+  block in the recipe.
+- **Homebrew** comes from the secureblue base, not this recipe, through its
+  `brew-proxy` DBus service. Bottles are still unsigned binaries outside the
+  image's signing chain.
 - **Fonts** (Nerd Fonts, Google Fonts) are downloaded unsigned at build time.
   Inter and Fira Code come from Fedora.
 - **Terra** supplies exactly one package at build time, `noctalia-greeter`,
@@ -188,7 +194,8 @@ image and Terra release together and the Actions versions separately.
 `image-version` in the recipe and the release in `files/dnf/terra.repo` must
 move together. An offline ISO can be built with
 [BlueBuild's ISO guide](https://blue-build.org/how-to/generate-iso/).
-`starship` is not in Fedora; `brew install starship`.
+`starship` is not in Fedora; `brew install starship` through the base's
+Homebrew.
 
 ## Credits
 

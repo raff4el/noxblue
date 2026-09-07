@@ -5,8 +5,16 @@ name: noxblue
 # description will be included in the image's metadata
 description: noxblue -- secureblue (hardened Fedora Atomic) with niri + Noctalia.
 
-# the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/secureblue/silverblue-main-hardened
+# secureblue's Sway Atomic variant. Chosen over silverblue-main-hardened
+# because niri + Noctalia use none of GNOME: this base carries sway, sddm,
+# waybar and friends instead, which is far smaller than gnome-shell, mutter,
+# gdm and the GNOME app set. secureblue applies the same hardening to both.
+#
+# The one Sway-specific thing secureblue does that could matter here is
+# setting the wlr ScreenCast/Screenshot backends to `none` in
+# sway-portals.conf. niri reads niri-portals.conf instead, which selects the
+# GNOME portal installed below, so that edit has no effect on this image.
+base-image: ghcr.io/secureblue/sericea-main-hardened
 # NOTE: when bumping this, also bump the hardcoded release in files/dnf/terra.repo
 # AND in the `keys:` URL below. Terra is pinned by hand rather than using
 # $releasever, because the secureblue base does not necessarily report the
@@ -65,7 +73,11 @@ modules:
         - upower
         - gnome-keyring
         # Formerly weak deps of niri that we do want: portals for screencast
-        # and file chooser, audio session manager.
+        # and file chooser, audio session manager. The GNOME portal is what
+        # niri's own portals.conf selects for ScreenCast; it is not in the
+        # Sway Atomic base and pulls only libadwaita/gnome-desktop libraries,
+        # not gnome-shell. The gtk portal and wireplumber are already in the
+        # base and stay listed so the intent survives a base change.
         - xdg-desktop-portal-gnome
         - xdg-desktop-portal-gtk
         - wireplumber
@@ -89,27 +101,26 @@ modules:
         # already guarantees Terra cannot supply anything else -- including its
         # own older `noctalia` build -- so nothing is lost by dropping it.
         - noctalia-greeter
-    # gdm is disabled below but still installed. Removing it is possible and
-    # would shrink the image, but it is the change most likely to break the
-    # build against a future base image, so it is opt-in:
+    # The base's own session (sway, sddm, waybar, foot, swaylock, ...) stays
+    # installed but unused: sddm is disabled below and nothing starts sway.
+    # Removing it would shrink the image a little, but it is the change most
+    # likely to break the build against a future base image, so it is opt-in:
     # remove:
     #   packages:
-    #     - gdm
+    #     - sddm
+    #     - sddm-wayland-sway
   - type: systemd
     system:
       enabled:
         - greetd.service
       disabled:
-        - gdm.service
-  - type: brew
-    # The formula index refreshes daily, but installed packages are NOT
-    # upgraded automatically. Homebrew bottles are prebuilt binaries outside
-    # rpm-ostree and outside this image's signing chain, so pulling new ones
-    # is a deliberate `brew upgrade`, not a timer. See the README's security
-    # trade-offs.
-    auto-update: true
-    auto-upgrade: false
-    update-interval: "1d"
+        # Sway Atomic's display manager. It and greetd both alias
+        # display-manager.service, so exactly one may be enabled.
+        - sddm.service
+  # No `brew` module: secureblue's desktop images already ship Homebrew as
+  # RPMs (`homebrew` + `brew-proxy`, mediated through a DBus service). The
+  # BlueBuild module installed a second copy at the same prefix with its own
+  # setup service and update timer.
   - type: default-flatpaks
     configurations:
       - notify: true # Send notification after install/uninstall is finished (true/false)

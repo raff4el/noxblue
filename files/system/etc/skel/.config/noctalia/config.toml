@@ -17,8 +17,9 @@
 # uses run0 instead. polkit itself is still there, and run0 authorizes through
 # it -- so something still has to display the prompt, and that something is an
 # authentication agent. Noctalia ships one but leaves it off, assuming the
-# desktop already supplies one; nothing here does, because gdm is disabled and
-# GNOME's agent comes with gnome-shell.
+# desktop already supplies one; nothing here does. The Sway Atomic base has
+# lxqt-policykit, but only Sway's own config starts it, and Sway is not the
+# session here.
 #
 # DankMaterialShell registered an agent by default, so this is what preserves
 # the behaviour you had there. Without it run0 still works in a terminal, where
