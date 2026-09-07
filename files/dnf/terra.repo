@@ -1,0 +1,32 @@
+# Fyra Labs' Terra repository, used at build time for exactly one package:
+# noctalia-greeter, which Fedora does not carry.
+#
+# Three deliberate restrictions:
+#
+#   includepkgs  Terra ships ~5000 packages, many of them newer rebuilds of
+#                things Fedora already provides. Limiting it to
+#                noctalia-greeter means it cannot silently win a version
+#                comparison against a Fedora package. The greeter's only
+#                non-Fedora-satisfiable dependencies are dbus, greetd and
+#                wlroots >= 0.20, all of which are in Fedora 44.
+#   priority     Belt and braces: even inside includepkgs, Fedora wins ties.
+#   releasever   Hardcoded rather than $releasever. The secureblue base does
+#                not necessarily report the version this image is built for.
+#                Keep this in sync with `image-version` in recipes/recipe.yml.
+#
+# `cleanup: true` in the recipe removes this repo from the finished image, so
+# it is not left behind as a trusted package source for runtime
+# `rpm-ostree install`.
+[terra]
+name=Terra 44
+baseurl=https://repos.fyralabs.com/terra44
+type=rpm
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://repos.fyralabs.com/terra44/key.asc
+enabled=1
+enabled_metadata=1
+metadata_expire=4h
+skip_if_unavailable=False
+includepkgs=noctalia-greeter
+priority=200

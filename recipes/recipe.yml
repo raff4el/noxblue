@@ -1,0 +1,134 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# image will be published to ghcr.io/<user>/<name>
+name: noxblue
+# description will be included in the image's metadata
+description: noxblue -- secureblue (hardened Fedora Atomic) with niri + Noctalia.
+
+# the base image to build on top of (FROM) and the version tag to use
+base-image: ghcr.io/secureblue/silverblue-main-hardened
+# NOTE: when bumping this, also bump the hardcoded release in
+# files/dnf/terra.repo. Terra is pinned by hand rather than using $releasever,
+# because the secureblue base does not necessarily report the version this
+# image is built for.
+image-version: 44 # latest is also supported if you want new updates ASAP
+
+# module configuration, executed in order
+modules:
+  - type: files
+    files:
+      - source: system
+        destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+
+  - type: dnf
+    repos:
+      # `cleanup` removes this repo from the finished image, so it is used at
+      # build time only and is not left behind as a trusted package source for
+      # runtime `rpm-ostree install`. Set to false if you want to layer
+      # packages from it on a running system.
+      cleanup: true
+      files:
+        # files/dnf/terra.repo. Fyra Labs' Terra, restricted with
+        # `includepkgs=noctalia-greeter` so it cannot shadow anything Fedora
+        # ships -- see the comments in that file. It is here for exactly one
+        # package: noctalia-greeter, which Fedora does not carry. Noctalia
+        # itself comes from Fedora's own repos, so no COPR is needed at all.
+        - terra.repo
+    install:
+      # niri Recommends waybar, fuzzel, swaylock and xwayland-satellite, all of
+      # which are either redundant with Noctalia or (in Xwayland's case)
+      # reintroduce X11, which secureblue's DE criteria explicitly want to be
+      # disableable. Weak deps are off, so anything actually needed is listed
+      # explicitly.
+      install-weak-deps: false
+      packages:
+        # Shell / compositor. Noctalia v5 is a native C++/OpenGL ES shell -- it
+        # is not the Quickshell-based v4 line, so there is no `quickshell` here
+        # and no separate launcher, bar, notification daemon, lock screen,
+        # wallpaper tool or settings app to install alongside it.
+        - niri
+        - noctalia
+        - greetd
+        - greetd-selinux
+        # Formerly weak deps of noctalia that we do want: DDC/CI brightness on
+        # external monitors, battery and power-profile reporting for the bar and
+        # Control Center, and the secret store.
+        - ddcutil
+        - upower
+        - gnome-keyring
+        # Formerly weak deps of niri that we do want: portals for screencast
+        # and file chooser, audio session manager.
+        - xdg-desktop-portal-gnome
+        - xdg-desktop-portal-gtk
+        - wireplumber
+        # Fonts. Noctalia defaults to `sans-serif` and bundles its own icon
+        # font, so nothing here is load-bearing -- these are the families to
+        # point `[shell] font_family` at, plus terminal fonts. The nerd-fonts
+        # and google-fonts modules below register different family names
+        # ("FiraCode Nerd Font", "Inter"), which is why these are separate.
+        - rsms-inter-fonts
+        - fira-code-fonts
+        # Userland
+        - nu
+        - alacritty
+        - wl-clipboard
+        # noctalia-greeter is pinned to Terra explicitly. Combined with
+        # `includepkgs` in the repo file, this makes it impossible for Terra to
+        # satisfy anything else in this transaction -- notably its own older
+        # `noctalia` build, which would otherwise compete with Fedora's.
+        # Its only dependencies are dbus, greetd and wlroots >= 0.20, all of
+        # which Fedora 44 provides.
+        - repo: terra
+          # A nested entry does not inherit `install-weak-deps` from above; its
+          # own default is true. noctalia-greeter has no Recommends today, but
+          # repeat it so that stays true if upstream adds some.
+          install-weak-deps: false
+          packages:
+            - noctalia-greeter
+    # gdm is disabled below but still installed. Removing it is possible and
+    # would shrink the image, but it is the change most likely to break the
+    # build against a future base image, so it is opt-in:
+    # remove:
+    #   packages:
+    #     - gdm
+  - type: systemd
+    system:
+      enabled:
+        - greetd.service
+      disabled:
+        - gdm.service
+  - type: brew
+    auto-update: true
+    auto-upgrade: true
+    update-interval: "1d"
+    upgrade-interval: "1d"
+  - type: default-flatpaks
+    configurations:
+      - notify: true # Send notification after install/uninstall is finished (true/false)
+        scope: system
+        repo:
+          title: "Flathub (system)"
+        # If no repo information is specified, Flathub will be used by default
+        install:
+          - com.github.tchx84.Flatseal
+          - io.github.flattool.Warehouse
+          - io.missioncenter.MissionCenter
+          - com.github.rafostar.Clapper
+          - org.gnome.Loupe
+      - scope: user # Also add Flathub user repo, but no user packages
+        repo:
+          title: "Flathub (user)"
+  - type: fonts
+    fonts:
+      nerd-fonts:
+        - FiraCode
+        - JetBrainsMono
+        - Terminus
+        - Hack
+        - NerdFontsSymbolsOnly
+        - SourceCodePro
+      google-fonts:
+        - Roboto
+        - Open Sans
+        - Inter
+  - type: signing # this sets up the proper policy & signing files for signed images to work fully

@@ -1,0 +1,6 @@
+cosign.key
+cosign.private
+/Containerfile
+
+# Private setup notes, not part of the published image
+SETUP.local.md

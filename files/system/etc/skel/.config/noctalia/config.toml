@@ -1,0 +1,19 @@
+# Noctalia defaults for new accounts.
+#
+# /etc/skel is only copied when an account is created, so this does nothing for
+# a user that already exists -- including yours, if you rebased onto this image
+# rather than installing it. Copy the file into ~/.config/noctalia/ by hand in
+# that case.
+#
+# Noctalia merges every *.toml in ~/.config/noctalia/ alphabetically, so you can
+# leave this file alone and add your own settings in a second file next to it.
+# Note that settings changed through the GUI land in
+# ~/.local/state/noctalia/settings.toml and override both.
+
+[shell]
+# Off by default upstream, on the assumption that the desktop already supplies a
+# polkit agent. This image has none: gdm is disabled and GNOME's agent ships
+# with gnome-shell, which is not running. Without this, anything needing
+# privilege escalation through polkit -- including the greeter's own appearance
+# sync -- fails with no visible prompt.
+polkit_agent = true
