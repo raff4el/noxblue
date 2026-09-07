@@ -31,7 +31,7 @@ Fedora's own repositories, **no COPRs are used at all**.
 | **Shell** | Noctalia 5 |
 | **Login** | greetd + noctalia-greeter |
 | **Terminal** | Alacritty, Nushell |
-| **Extras** | Homebrew, Flatpak (Flathub system + user), zram tuned for desktop use |
+| **Extras** | Homebrew (manual upgrades), Flatpak (Flathub system + user), zram tuned for desktop use |
 | **Flatpaks** | Flatseal, Warehouse, Mission Center, Clapper, Loupe |
 
 Screencast and file-chooser portals, `gnome-keyring`, `wireplumber`, `ddcutil`
@@ -176,9 +176,15 @@ rebase:
   niri, any application speaking `wlr-screencopy` can capture the whole desktop,
   including other applications' windows. This is the main property traded away
   by swapping out GNOME.
-- **Homebrew is installed and self-updates daily** — a second package manager
-  pulling unsigned prebuilt bottles, outside rpm-ostree and outside this image's
-  signing chain. Some brew binaries also misbehave under `hardened_malloc`.
+- **Homebrew is installed** — a second package manager pulling unsigned prebuilt
+  bottles, outside rpm-ostree and outside this image's signing chain. Its formula
+  index refreshes daily, but installed packages are only upgraded when you run
+  `brew upgrade` yourself. Some brew binaries also misbehave under
+  `hardened_malloc`.
+- **Fonts are fetched unsigned at build time.** The Nerd Fonts and Google Fonts
+  families come from plain archive downloads off GitHub and Google, with no
+  signature to check, unlike every package from dnf. The list is kept short for
+  that reason; `rsms-inter-fonts` and `fira-code-fonts` come from Fedora instead.
 - **One third-party repository is used at build time.** Fedora carries
   `noctalia`, but not `noctalia-greeter`, which exists only in Fyra Labs'
   [Terra](https://terra.fyralabs.com). `files/dnf/terra.repo` restricts Terra to
@@ -242,6 +248,29 @@ to put the prompt and fails silently.
 > existing account, copy `/etc/skel/.config/noctalia/config.toml` into
 > `~/.config/noctalia/` yourself or the polkit agent stays off.
 
+### Keyring
+
+`gnome-keyring` is installed and its daemon is socket-activated by the user
+session, so the secret service is available to browsers and Flatpaks. What may
+differ from GNOME is **unlocking at login**: gdm's PAM stack carries
+`pam_gnome_keyring.so`, which unlocks the login keyring with the password you
+just typed. greetd authenticates through `/etc/pam.d/greetd`, and this image does
+not modify that file (see *Login screen* for why PAM is not forked). Check
+whether the keyring came up unlocked:
+
+```bash
+gdbus call --session -d org.freedesktop.secrets \
+  -o /org/freedesktop/secrets/collection/login \
+  -m org.freedesktop.DBus.Properties.Get org.freedesktop.Secret.Collection Locked
+# (<false>,)  unlocked at login
+# (<true>,)   you will get a keyring password prompt on first use
+```
+
+If it is locked, the first application to ask for a secret prompts once per
+session. The fix would be a `pam_gnome_keyring.so` line in the greetd PAM
+service, which is a local edit to `/etc/pam.d/greetd` rather than something this
+image ships.
+
 ### Login screen
 
 greetd runs `noctalia-greeter-session`, which starts the greeter's own bundled
@@ -294,6 +323,15 @@ icon is shown; add `accountsservice` to the recipe if you want them.
 Fork the repository, then see [BlueBuild's documentation](https://blue-build.org/how-to/setup/).
 You will need a cosign keypair and a `SIGNING_SECRET` repository secret; the
 public half in `cosign.pub` must be replaced with your own.
+
+Every build first runs `niri validate` on the system niri config, using the
+niri package from the Fedora release pinned in the recipe, and parses the TOML
+files under `files/`. A config that would leave you without a desktop fails CI
+instead of shipping.
+
+Updates are tracked by [Renovate](https://github.com/apps/renovate), which must
+be installed on the fork: it bumps the secureblue base tag and the pinned Terra
+release together in one PR, and the GitHub Actions versions separately.
 
 An offline ISO can be generated on a Fedora Atomic host — see
 [BlueBuild's ISO guide](https://blue-build.org/how-to/generate-iso/). ISOs are

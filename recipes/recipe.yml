@@ -72,8 +72,8 @@ modules:
         # Fonts. Noctalia defaults to `sans-serif` and bundles its own icon
         # font, so nothing here is load-bearing -- these are the families to
         # point `[shell] font_family` at, plus terminal fonts. The nerd-fonts
-        # and google-fonts modules below register different family names
-        # ("FiraCode Nerd Font", "Inter"), which is why these are separate.
+        # module below registers different family names ("FiraCode Nerd Font"
+        # rather than "Fira Code"), which is why both are present.
         - rsms-inter-fonts
         - fira-code-fonts
         # Userland
@@ -102,10 +102,14 @@ modules:
       disabled:
         - gdm.service
   - type: brew
+    # The formula index refreshes daily, but installed packages are NOT
+    # upgraded automatically. Homebrew bottles are prebuilt binaries outside
+    # rpm-ostree and outside this image's signing chain, so pulling new ones
+    # is a deliberate `brew upgrade`, not a timer. See the README's security
+    # trade-offs.
     auto-update: true
-    auto-upgrade: true
+    auto-upgrade: false
     update-interval: "1d"
-    upgrade-interval: "1d"
   - type: default-flatpaks
     configurations:
       - notify: true # Send notification after install/uninstall is finished (true/false)
@@ -122,17 +126,20 @@ modules:
       - scope: user # Also add Flathub user repo, but no user packages
         repo:
           title: "Flathub (user)"
+  # Both font sources are downloaded at build time as plain archives from
+  # GitHub and Google, with no signature check -- unlike everything from dnf.
+  # Keep the list short: each Nerd Font family is tens of megabytes in the
+  # image. NerdFontsSymbolsOnly is the one that matters, since fontconfig
+  # falls back to it for glyphs missing from any other monospace font.
   - type: fonts
     fonts:
       nerd-fonts:
         - FiraCode
         - JetBrainsMono
-        - Terminus
-        - Hack
         - NerdFontsSymbolsOnly
-        - SourceCodePro
       google-fonts:
+        # Inter is deliberately absent here: rsms-inter-fonts above is the
+        # same family from Fedora's signed repos.
         - Roboto
         - Open Sans
-        - Inter
   - type: signing # this sets up the proper policy & signing files for signed images to work fully
