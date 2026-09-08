@@ -53,6 +53,12 @@ secureblue, its reject-by-default policy needs the key trusted first: see
   image. See `files/dnf/terra.repo`.
 - **No Xwayland.** Add `xwayland-satellite` to the recipe for X11 apps.
 - **The login screen lists local accounts.** noctalia-greeter cannot hide them.
+- **The image bars D3cold on the Intel AX210** (`8086:2725`). On Framework 13
+  AMD the platform powers that card's PCIe port down during s2idle and never
+  restores it, so resume stalls ~253s in `wiphy_resume` with the machine fully
+  unresponsive, and the card stays dead until a cold boot. The udev rule in
+  `files/system/usr/lib/udev/rules.d` is inert without that card. It is not
+  needed for the MediaTek RZ717 Framework ships for this model.
 
 ## Building
 

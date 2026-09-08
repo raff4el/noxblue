@@ -1,0 +1,23 @@
+# Intel AX210 (8086:2725) does not survive s2idle on Framework 13 AMD.
+#
+# During suspend the platform drops the card's upstream PCIe port to D3cold and
+# never restores power. On resume the card reads back as HW_REV=0xFFFFFFFF and
+# iwlwifi's wiphy_resume spins for ~253 seconds before failing with -110, so the
+# whole machine sits unresponsive for four minutes -- keyboard, touchpad and USB
+# all dead, because nothing else in the kernel is making progress either. The
+# card then stays dead until a COLD boot; a warm reboot does not re-power it,
+# and a function-level reset is rejected because the device is already in
+# D3cold and cannot be brought to D0 to be reset.
+#
+# Measured on this hardware, pm_test=platform with iwlwifi loaded:
+#   before: PM: resume devices took 255.610 seconds  (last_failed_dev = phy0)
+#   after:  PM: resume devices took   0.377 seconds  (no failure)
+#
+# Barring D3cold on the card is enough: the port above it can only power down
+# once every child has, so refusing here keeps the whole path alive. Keyed on
+# the card's PCI ID rather than a bus address, so it is inert on machines
+# without an AX210 and leaves the sibling port at 0000:00:02.1 alone.
+#
+# pcie_port_pm=off cures it too, but disables PCIe port power management for
+# every port on the machine; this stays scoped to the one broken device.
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x8086", ATTR{device}=="0x2725", ATTR{d3cold_allowed}="0"
