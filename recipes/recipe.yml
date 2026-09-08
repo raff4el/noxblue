@@ -147,6 +147,17 @@ modules:
           - io.missioncenter.MissionCenter
           - com.github.rafostar.Clapper
           - org.gnome.Loupe
+          # GTK 3 themes for sandboxed apps. The gschema override sets
+          # gtk-theme to adw-gtk3-dark, but flatpaks cannot see the RPM theme
+          # in /usr/share/themes on the host: GTK inside the sandbox resolves
+          # the name against these extensions instead, and falls back to light
+          # Adwaita when the matching one is missing. That fallback is why a
+          # dark desktop grows light Electron menu bars. Only the extension
+          # whose name matches the active theme applies, so both variants ship
+          # -- Noctalia's GTK 3 template switches the name to adw-gtk3 in light
+          # mode. System scope covers user-installed flatpaks too.
+          - org.gtk.Gtk3theme.adw-gtk3-dark
+          - org.gtk.Gtk3theme.adw-gtk3
       - scope: user # Also add Flathub user repo, but no user packages
         repo:
           title: "Flathub (user)"

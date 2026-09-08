@@ -51,6 +51,13 @@ covers both GTK 4 apps and GTK 3 ones like Thunar. To have them follow
 Noctalia's own light/dark mode instead, enable the **GTK 3** and **GTK 4**
 templates under **Settings → Templates**; they set the same keys per user.
 
+Flatpaks cannot see `/usr/share/themes` on the host, so the theme name above
+would resolve to nothing inside a sandbox and GTK would fall back to light
+Adwaita -- a dark desktop with light Electron menu bars. The image installs
+`org.gtk.Gtk3theme.adw-gtk3-dark` and `org.gtk.Gtk3theme.adw-gtk3` as system
+flatpaks to cover both modes. Only the extension matching the active theme
+name applies, and system scope reaches user-installed flatpaks.
+
 ## Keyring
 
 Unlocked at login through greetd's PAM stack, the way gdm does it. Confirm:
