@@ -20,6 +20,8 @@
 | <kbd>Mod</kbd>+<kbd>O</kbd> / <kbd>Mod</kbd>+<kbd>Tab</kbd> | Overview |
 | <kbd>Mod</kbd>+<kbd>H</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> or arrows | Move focus |
 | <kbd>Mod</kbd>+<kbd>Shift</kbd>+ same | Move window |
+| <kbd>Mod</kbd>+<kbd>Ctrl</kbd>+ same | Focus monitor |
+| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>Ctrl</kbd>+ same | Move column to monitor |
 | <kbd>Mod</kbd>+<kbd>1</kbd>…<kbd>9</kbd> | Switch workspace |
 | <kbd>Mod</kbd>+<kbd>R</kbd> / <kbd>F</kbd> / <kbd>Shift</kbd>+<kbd>F</kbd> | Column width / maximize / fullscreen |
 | <kbd>Print</kbd> | Screenshot (niri) |
