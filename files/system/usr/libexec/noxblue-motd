@@ -1,0 +1,169 @@
+#!/usr/bin/bash
+
+# noxblue login banner, run from /etc/profile.d/user-motd.sh in place of
+# secureblue's /usr/libexec/secureblue-motd. That script only reads the image
+# tag from names matching *hardened:*, so on noxblue:latest it always warns that
+# the tag is missing, and all it can say about the build is "latest".
+#
+# This one shows the build that is actually booted: the commit and build time
+# that CI writes to /usr/share/noxblue/build-info.json, the image digest, and
+# the secureblue base version rpm-ostree reports. `ujust toggle-user-motd`
+# still hides it, because the no-show-user-motd check in profile.d is unchanged.
+#
+# No `set -e`: this runs in every login shell, so a failed lookup should drop
+# a line from the banner rather than print an error.
+set -uo pipefail
+
+command -v jq >/dev/null 2>&1 || exit 0
+
+reset=$'\e[0m'
+bold=$'\e[1m'
+dim=$'\e[2m'
+accent=$'\e[38;2;137;180;250m'
+header=$'\e[1;38;2;17;17;27m\e[48;2;137;180;250m'
+
+build_info_path='/usr/share/noxblue/build-info.json'
+now=$(date +%s)
+
+field() {
+    jq -r --arg k "$2" '.[$k] // empty' <<<"$1" 2>/dev/null
+}
+
+# One status call covers both the booted deployment and whether an update is
+# already staged behind it.
+status=$(rpm-ostree status --json 2>/dev/null) || status='{}'
+booted=$(jq -c '[.deployments[]? | select(.booted)][0] // .deployments[0]? // {}' <<<"${status}" 2>/dev/null) || booted='{}'
+staged=$(jq -r 'any(.deployments[]?; .staged == true)' <<<"${status}" 2>/dev/null) || staged='false'
+
+image_ref=$(field "${booted}" container-image-reference)
+image_ref=${image_ref#*:docker://}
+digest=$(field "${booted}" container-image-reference-digest)
+digest=${digest#sha256:}
+base_version=$(field "${booted}" version)
+image_created=$(field "${booted}" timestamp)
+
+# The tag follows the last ':' of the final path segment. A digest-pinned
+# reference (name@sha256:...) has none.
+image_name=${image_ref##*/}
+image_tag=''
+if [[ "${image_name}" != *@* && "${image_name}" == *:* ]]; then
+    image_tag=${image_name##*:}
+fi
+
+info='{}'
+if [[ -r "${build_info_path}" ]]; then
+    info=$(jq -c 'objects' "${build_info_path}" 2>/dev/null) || info='{}'
+    [[ -n "${info}" ]] || info='{}'
+fi
+commit=$(field "${info}" commit)
+subject=$(field "${info}" subject)
+built=$(field "${info}" built)
+event=$(field "${info}" event)
+repo_url=$(field "${info}" repo_url)
+base_image=$(field "${info}" base_image)
+
+# Prefer CI's build time; fall back to the image's creation time, which is what
+# rpm-ostree reports as the deployment timestamp.
+built_epoch=''
+if [[ -n "${built}" ]]; then
+    built_epoch=$(date -d "${built}" +%s 2>/dev/null) || built_epoch=''
+fi
+if [[ -z "${built_epoch}" && "${image_created}" =~ ^[0-9]+$ ]]; then
+    built_epoch=${image_created}
+fi
+
+cols=${COLUMNS:-}
+[[ "${cols}" =~ ^[0-9]+$ ]] || cols=$(tput cols 2>/dev/null)
+[[ "${cols}" =~ ^[0-9]+$ ]] || cols=80
+
+ago() {
+    local s=$(( $1 < 0 ? 0 : $1 )) n
+    if (( s < 3600 )); then
+        echo "$(( s / 60 )) min ago"
+    elif (( s < 86400 )); then
+        echo "$(( s / 3600 )) h ago"
+    else
+        n=$(( s / 86400 ))
+        if (( n == 1 )); then echo '1 day ago'; else echo "${n} days ago"; fi
+    fi
+}
+
+fit() {
+    local text=$1 max=$2
+    (( max < 10 )) && max=10
+    if (( ${#text} > max )); then
+        printf '%s…' "${text:0:max-1}"
+    else
+        printf '%s' "${text}"
+    fi
+}
+
+row() {
+    printf '  %s%-7s%s %s\n' "${dim}" "$1" "${reset}" "$2"
+}
+
+command_row() {
+    printf '  %s%-24s%s %s\n' "${accent}" "$1" "${reset}" "$2"
+}
+
+# At most one tip, most urgent first.
+tip=''
+if command -v ujust >/dev/null 2>&1 && ujust enroll-secure-boot-keys status 2>/dev/null | grep -Fq 'Status: not enrolled'; then
+    tip="Secure Boot key is not enrolled. Run ${accent}ujust enroll-secure-boot-keys${reset}${bold}, see https://secureblue.dev/faq#new-key"
+elif [[ -n "${image_ref}" && "${image_tag}" != 'latest' ]]; then
+    if [[ -n "${image_tag}" ]]; then pinned="tag :${image_tag}"; else pinned='an untagged reference'; fi
+    tip="Booted from ${pinned}, which does not follow new builds. Rebase to ${accent}:latest${reset}${bold} to keep updating."
+elif [[ "${staged}" != 'true' && -n "${built_epoch}" ]] && (( now - built_epoch >= 7 * 86400 )); then
+    tip="This build is over a week old and no update is staged. Check ${accent}journalctl -u rpm-ostreed-automatic.service${reset}${bold} or run ${accent}run0 rpm-ostree upgrade${reset}${bold}."
+fi
+
+echo
+printf '  %s noxblue %s %ssecureblue + niri + Noctalia%s\n' "${header}" "${reset}" "${dim}" "${reset}"
+echo
+
+if [[ -n "${image_ref}" ]]; then
+    line="${bold}${image_ref}${reset}"
+    [[ -n "${digest}" ]] && line+="  ${dim}sha256:${digest:0:12}${reset}"
+    row 'Image' "${line}"
+fi
+
+if [[ -n "${commit}" ]]; then
+    row 'Build' "${accent}${commit:0:7}${reset}  $(fit "${subject}" $(( cols - 20 )))"
+else
+    row 'Build' "local build ${dim}(no build info)${reset}"
+fi
+if [[ -n "${built_epoch}" ]]; then
+    when="$(date -d "@${built_epoch}" '+%Y-%m-%d %H:%M %Z') · $(ago $(( now - built_epoch )))"
+    [[ -n "${event}" ]] && when+=" · ${event}"
+    row '' "${dim}${when}${reset}"
+fi
+
+if [[ -n "${base_version}" ]]; then
+    base_name=${base_image##*/}
+    row 'Base' "${base_name:+${base_name} }${base_version}"
+fi
+
+if [[ "${staged}" == 'true' ]]; then
+    row 'Update' "${accent}staged${reset}, reboot to apply"
+fi
+
+echo
+command_row 'ujust --choose' 'List all available commands'
+command_row 'ujust toggle-user-motd' 'Hide this banner'
+if command -v brew >/dev/null 2>&1; then
+    command_row 'brew help' 'Manage command line packages'
+fi
+
+if [[ -n "${tip}" ]]; then
+    echo
+    printf '  %s%s%s\n' "${bold}" "${tip}" "${reset}"
+fi
+
+echo
+if [[ -n "${repo_url}" && -n "${commit}" ]]; then
+    row 'Commit' "${repo_url}/commit/${commit}"
+fi
+row 'FAQ' 'https://secureblue.dev/faq'
+echo
+
+exit 0

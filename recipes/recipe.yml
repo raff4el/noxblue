@@ -178,3 +178,11 @@ modules:
         - Roboto
         - Open Sans
   - type: signing # this sets up the proper policy & signing files for signed images to work fully
+  # Build info for the login banner (/usr/libexec/noxblue-motd): commit,
+  # subject, build time and trigger. CI overwrites the committed `{}`
+  # placeholder in files/buildinfo before building; a local build ships the
+  # placeholder and the banner shows "local build".
+  - type: files
+    files:
+      - source: buildinfo
+        destination: /usr/share/noxblue

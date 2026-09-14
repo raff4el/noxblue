@@ -73,11 +73,36 @@ jobs:
         recipe:
           - recipe.yml
     steps:
-      # the build is fully handled by the reusable github action
+      # Checked out here rather than by the action (skip_checkout below): the
+      # action's own checkout would wipe the build info written next.
+      - uses: actions/checkout@v7
+
+      # Read by the login banner, /usr/libexec/noxblue-motd. Overwrites the
+      # committed `{}` placeholder; see the last module in the recipe.
+      - name: Write build info
+        env:
+          RECIPE: recipes/${{ matrix.recipe }}
+          EVENT: ${{ github.event_name }}
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          base=$(sed -n 's/^base-image:[[:space:]]*\([^[:space:]#]*\).*/\1/p' "$RECIPE")
+          jq -n \
+            --arg commit "$(git rev-parse HEAD)" \
+            --arg subject "$(git log -1 --format=%s)" \
+            --arg built "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg event "$EVENT" \
+            --arg repo_url "$REPO_URL" \
+            --arg run_url "$RUN_URL" \
+            --arg base_image "$base" \
+            '$ARGS.named' | tee files/buildinfo/build-info.json
+
       - name: Build Custom Image
         uses: blue-build/github-action@v1.12
         with:
           recipe: ${{ matrix.recipe }}
+          skip_checkout: true
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
