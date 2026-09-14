@@ -47,6 +47,10 @@ secureblue, its reject-by-default policy needs the key trusted first: see
 - **Homebrew** comes from the secureblue base through `brew-proxy`. Bottles are
   unsigned binaries outside the image's signing chain, so the base's daily
   `brew-upgrade.timer` is disabled here; upgrade with `brew upgrade` yourself.
+- **No build-provenance check before automatic updates.** secureblue's
+  `verify-provenance.sh` rejects every image outside `ghcr.io/secureblue/*`,
+  which blocked all automatic updates, so the image clears it. Updates are
+  still verified against this repo's cosign signature.
 - **Fonts** (Nerd Fonts, Google Fonts) are downloaded unsigned at build time.
 - **Terra** supplies exactly one package at build time, `noctalia-greeter`,
   restricted with `includepkgs`, GPG-checked and removed from the finished

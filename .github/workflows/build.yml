@@ -2,8 +2,10 @@ name: bluebuild
 on:
   schedule:
     - cron:
-        "30 06 * * *" # build at 06:30 UTC every day
-        # (30 minutes after last secureblue images start building)
+        "30 18 * * *" # build at 18:30 UTC every day
+        # secureblue's build is scheduled for 06:00 UTC, but GitHub starts it
+        # around 10:00-11:00 and it finishes 12:00-14:40 UTC. Building in the
+        # morning picked up the previous day's base, sometimes by minutes.
         #
         # NOTE: GitHub does not deliver `schedule` events to forked
         # repositories. If this repo is still a fork, detach it
