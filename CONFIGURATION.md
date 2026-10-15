@@ -60,14 +60,18 @@ Any other tool binds the same way:
 `noctalia msg plugin alexander/screen-toolkit:service all <tool>` with `qr`,
 `palette`, `lens`, `measure`, `annotate`, `recordMp4`, `recordStop`, …
 
-- **OCR languages**: English only. Others need `tesseract-langpack-<code>` in
-  the recipe plus the code in the plugin's settings.
+- **OCR languages**: English and German data are installed, but the plugin
+  defaults to `eng` only. Set **OCR language** to `eng+deu` in the plugin's
+  settings (the gear under **Settings → Plugins**). Other languages need
+  `tesseract-langpack-<code>` in the recipe.
 - **Colour picker**: the plugin calls `hyprpicker`, which Fedora does not
   carry. `/usr/bin/hyprpicker` here is a stand-in over `niri msg pick-color`;
   it only does `--format=hex`, which is all the plugin uses.
-- **Recording** uses Fedora's `wf-recorder`, which defaults to free codecs; the
-  plugin's codec setting only applies to `wl-screenrec` and
-  `gpu-screen-recorder`, neither of which is installed.
+- **Recording** uses Fedora's `wf-recorder`. It defaults to VP9 + Opus and the
+  plugin passes it no codec, so MP4s are VP9 rather than H.264; the plugin's
+  codec setting only applies to `wl-screenrec` and `gpu-screen-recorder`,
+  neither of which is installed. ffmpeg itself is secureblue's full negativo17
+  build with x264, so H.264 works everywhere else.
 - **Share**, **Lens** and **Translate** send the capture or text to uguu.se,
   Google and Google Translate. Nothing leaves the machine unless you use them.
 

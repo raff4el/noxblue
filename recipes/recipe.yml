@@ -100,19 +100,23 @@ modules:
         # in /etc/skel). Screenshots and annotation go through Noctalia itself;
         # these are the tools its other features shell out to. Missing ones
         # only disable the feature that needs them.
-        #   OCR: tesseract plus one langpack per language in the plugin's
-        #   settings -- add tesseract-langpack-deu etc. for more.
+        #   OCR: tesseract plus one langpack per language. Both are used once
+        #   the plugin's OCR language setting is `eng+deu`; add more
+        #   tesseract-langpack-<code> here for others.
         - tesseract
         - tesseract-langpack-eng
+        - tesseract-langpack-deu
         - ImageMagick # every pixel pipeline (`magick`)
         - zbar # QR / barcode (`zbarimg`)
         - jq # image upload (Share) and Google Lens, with curl from the base
         - translate-shell # OCR translation (`trans`); sends the text to Google
         #   Recording. wf-recorder is Fedora's build, patched to default to
-        #   free codecs; ffmpeg-free does the MP4/GIF conversion. slurp draws
-        #   the region, pactl resolves the audio source.
+        #   VP9 + Opus, and the plugin passes it no codec. MP4/GIF conversion
+        #   uses the base's ffmpeg: secureblue already replaces ffmpeg-free with
+        #   negativo17's full build (x264, x265, ...) and codec-enabled Mesa,
+        #   so ffmpeg-free must not be listed here. slurp draws the region,
+        #   pactl resolves the audio source.
         - wf-recorder
-        - ffmpeg-free
         - slurp
         - bc
         - pulseaudio-utils
