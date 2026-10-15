@@ -22,8 +22,8 @@ screenshots, and it ships in Fedora's own repos: no COPRs.
 | **Compositor** | niri 26.04 |
 | **Shell** | Noctalia 5 |
 | **Login** | greetd + noctalia-greeter |
-| **Terminal** | Alacritty, fish + Starship, Nushell |
-| **OCR** | Noctalia's `fel/ocr` plugin (grim, slurp, tesseract) |
+| **Terminal** | Alacritty, fish + Starship |
+| **Screen tools** | Noctalia's Screen Toolkit plugin: OCR, QR, colour picker, palette, Lens, measure, recording |
 | **Extras** | Homebrew (secureblue's `brew-proxy`), Flathub (system + user), zram tuned for desktop use |
 | **Flatpaks** | Flatseal, Warehouse, Mission Center, Clapper, Loupe |
 

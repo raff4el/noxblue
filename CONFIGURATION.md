@@ -26,7 +26,7 @@
 | <kbd>Mod</kbd>+<kbd>R</kbd> / <kbd>F</kbd> / <kbd>Shift</kbd>+<kbd>F</kbd> | Column width / maximize / fullscreen |
 | <kbd>Print</kbd> | Screenshot (niri) |
 | <kbd>Shift</kbd>+<kbd>Print</kbd> | Screenshot region with annotation (Noctalia) |
-| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | OCR a region to the clipboard (Noctalia `fel/ocr`) |
+| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> / <kbd>T</kbd> / <kbd>C</kbd> | Screen Toolkit panel / OCR / colour picker |
 
 ## niri
 
@@ -43,20 +43,39 @@ Merges every `*.toml` in `~/.config/noctalia/`; GUI changes land in
 `[shell] polkit_agent = true` via `/etc/skel`: secureblue has no `pkexec`, and
 `run0` needs an agent to show prompts outside a terminal.
 
-### OCR
+### Screen Toolkit
 
-The `/etc/skel` config also enables the community plugin `fel/ocr` and puts its
-widget on the bar before the clipboard button (left click: region, right click:
-whole output). <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> goes through the
-widget, so it needs the widget on the bar. Noctalia clones the plugin from
-GitHub on first start. The image ships `grim`, `slurp`, `tesseract` and English
-data; other languages need `tesseract-langpack-<code>` in the recipe plus the
-code under **Settings → Plugins → OCR**.
+The `/etc/skel` config also enables the community plugin
+`alexander/screen-toolkit` and puts its widget on the bar before the clipboard
+button (left click: tool panel, right click: colour picker). Noctalia clones the
+plugin from GitHub on first start; the image ships the tools it calls.
 
-For an account that existed before this, copy the `[plugins]`, `[widget.ocr]`
-and `[bar.default]` tables from `/etc/skel/.config/noctalia/config.toml` into
-`~/.config/noctalia/`, or run `noctalia msg plugins enable fel/ocr` and add the
-widget through the bar's Add-widget picker.
+| Key | Tool |
+| --- | --- |
+| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd> | Tool panel |
+| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | OCR a region to the clipboard |
+| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> | Pick a colour |
+
+Any other tool binds the same way:
+`noctalia msg plugin alexander/screen-toolkit:service all <tool>` with `qr`,
+`palette`, `lens`, `measure`, `annotate`, `recordMp4`, `recordStop`, …
+
+- **OCR languages**: English only. Others need `tesseract-langpack-<code>` in
+  the recipe plus the code in the plugin's settings.
+- **Colour picker**: the plugin calls `hyprpicker`, which Fedora does not
+  carry. `/usr/bin/hyprpicker` here is a stand-in over `niri msg pick-color`;
+  it only does `--format=hex`, which is all the plugin uses.
+- **Recording** uses Fedora's `wf-recorder`, which defaults to free codecs; the
+  plugin's codec setting only applies to `wl-screenrec` and
+  `gpu-screen-recorder`, neither of which is installed.
+- **Share**, **Lens** and **Translate** send the capture or text to uguu.se,
+  Google and Google Translate. Nothing leaves the machine unless you use them.
+
+For an account that existed before this, copy the `[plugins]`,
+`[widget.screen-toolkit]` and `[bar.default]` tables from
+`/etc/skel/.config/noctalia/config.toml` into `~/.config/noctalia/`, or run
+`noctalia msg plugins enable alexander/screen-toolkit` and add the widget
+through the bar's Add-widget picker.
 
 ## Shell
 

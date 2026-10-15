@@ -93,19 +93,33 @@ modules:
         - adw-gtk3-theme
         # Userland. fish is the shell Alacritty opens (/etc/alacritty), with
         # Starship as its prompt; the login shell stays bash.
-        - nu
         - fish
         - alacritty
         - wl-clipboard
-        # Noctalia's OCR plugin (fel/ocr, enabled in /etc/skel): it shells out
-        # to slurp for the region, grim for the capture and tesseract for the
-        # text. tesseract alone has no language data; each language in the
-        # plugin's settings needs its langpack. Add tesseract-langpack-deu etc.
-        # here for more.
-        - grim
-        - slurp
+        # Noctalia's Screen Toolkit plugin (alexander/screen-toolkit, enabled
+        # in /etc/skel). Screenshots and annotation go through Noctalia itself;
+        # these are the tools its other features shell out to. Missing ones
+        # only disable the feature that needs them.
+        #   OCR: tesseract plus one langpack per language in the plugin's
+        #   settings -- add tesseract-langpack-deu etc. for more.
         - tesseract
         - tesseract-langpack-eng
+        - ImageMagick # every pixel pipeline (`magick`)
+        - zbar # QR / barcode (`zbarimg`)
+        - jq # image upload (Share) and Google Lens, with curl from the base
+        - translate-shell # OCR translation (`trans`); sends the text to Google
+        #   Recording. wf-recorder is Fedora's build, patched to default to
+        #   free codecs; ffmpeg-free does the MP4/GIF conversion. slurp draws
+        #   the region, pactl resolves the audio source.
+        - wf-recorder
+        - ffmpeg-free
+        - slurp
+        - bc
+        - pulseaudio-utils
+        # The colour picker wants hyprpicker, which neither Fedora nor Terra
+        # carries. /usr/bin/hyprpicker in this image is a stand-in over
+        # `niri msg pick-color` (see the file); mpv, for the legacy panel's
+        # recording preview, is left out.
         # The packages Fedora does not carry, both from Terra (see
         # files/dnf/terra.repo). Starship comes from Terra rather than as a
         # GitHub release tarball so it is GPG-checked like everything else.

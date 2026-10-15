@@ -321,11 +321,19 @@ binds {
         spawn "noctalia" "msg" "screenshot-region";
     }
 
-    // Text from a screen region onto the clipboard: Noctalia's fel/ocr plugin
-    // and its bar widget, both set up in /etc/skel's Noctalia config. The plugin
-    // takes IPC through the widget, so this does nothing without it on the bar.
+    // Noctalia's Screen Toolkit plugin, enabled in /etc/skel's Noctalia config.
+    // These do nothing until it is enabled. Other tools take the same form:
+    // qr, palette, lens, measure, annotate, recordMp4, recordStop, ...
+    Mod+Shift+S hotkey-overlay-title="Screen Toolkit" {
+        spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "toggle";
+    }
+
     Mod+Shift+T hotkey-overlay-title="OCR Region to Clipboard" {
-        spawn "noctalia" "msg" "plugin" "fel/ocr:ocr" "all" "ocr-region";
+        spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "ocr";
+    }
+
+    Mod+Shift+C hotkey-overlay-title="Pick Colour" {
+        spawn "noctalia" "msg" "plugin" "alexander/screen-toolkit:service" "all" "colorPicker";
     }
 
     // Media keys through Noctalia, so its OSD shows the change.

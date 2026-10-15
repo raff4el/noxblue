@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+# noxblue: not hyprpicker. A stand-in for the one call Noctalia's Screen Toolkit
+# plugin makes, `hyprpicker --no-fancy --format=hex`, answered by niri's own
+# picker instead (`niri msg pick-color`). Hyprpicker is in neither Fedora nor
+# Terra. Every argument is ignored: it always prints one `#RRGGBB` line, and
+# exits 1 if the pick is cancelled.
+set -euo pipefail
+
+case "${1-}" in
+    -h | --help)
+        echo "usage: hyprpicker  (noxblue stand-in over niri msg pick-color; prints #RRGGBB)"
+        exit 0
+        ;;
+esac
+
+# {"rgb":[r,g,b]} with components in 0..1, or null when cancelled.
+rgb=$(niri msg --json pick-color | jq -er '.rgb | map(. * 255 | round | if . < 0 then 0 elif . > 255 then 255 else . end) | @tsv') || exit 1
+read -r r g b <<<"${rgb}"
+printf '#%02X%02X%02X\n' "${r}" "${g}" "${b}"

@@ -30,22 +30,22 @@
 polkit_agent = true
 
 [plugins]
-# Noctalia's OCR plugin from the default `community` source: select a region,
-# get its text on the clipboard. Bound to Mod+Shift+T in /etc/niri/config.kdl;
-# the image ships its grim, slurp and tesseract (English data) dependencies.
-# Noctalia clones the plugin from GitHub the first time it starts with network.
-# Languages, clipboard and notification options are under Settings -> Plugins
-# -> OCR; each language needs its tesseract-langpack-* package.
-enabled = ["fel/ocr"]
+# Screen Toolkit from the default `community` source: OCR, QR, colour picker,
+# palette, Google Lens, measure, annotate and recording. The image ships the
+# tools it shells out to (see recipes/recipe.yml); Noctalia clones the plugin
+# itself from GitHub the first time it starts with network. Keybindings are in
+# /etc/niri/config.kdl; OCR language, recording codec etc. are under
+# Settings -> Plugins -> Screen Toolkit.
+enabled = ["alexander/screen-toolkit"]
 
-# The plugin's bar widget: left click OCRs a region, right click the whole
-# output. It also has to be on the bar for Mod+Shift+T to work, since the
-# plugin handles IPC from the widget.
-[widget.ocr]
-type = "fel/ocr:ocr"
+# Its bar widget: left click opens the tool panel (or stops a recording), right
+# click picks a colour. The keybindings talk to the plugin's service and work
+# without it.
+[widget.screen-toolkit]
+type = "alexander/screen-toolkit:widget"
 
 [bar.default]
-# Noctalia's default `end` lane with `ocr` inserted before `clipboard`. A lane
-# set here replaces the built-in one, so this freezes the rest of the lane at
-# Noctalia 5's defaults; rearranging the bar in Settings overrides it anyway.
-end = ["media", "tray", "notifications", "ocr", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"]
+# Noctalia's default `end` lane with the widget inserted before `clipboard`. A
+# lane set here replaces the built-in one, so this freezes the rest of the lane
+# at Noctalia 5's defaults; rearranging the bar in Settings overrides it anyway.
+end = ["media", "tray", "notifications", "screen-toolkit", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"]
