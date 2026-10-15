@@ -28,3 +28,24 @@
 #
 # Set to false if you run a different agent.
 polkit_agent = true
+
+[plugins]
+# Noctalia's OCR plugin from the default `community` source: select a region,
+# get its text on the clipboard. Bound to Mod+Shift+T in /etc/niri/config.kdl;
+# the image ships its grim, slurp and tesseract (English data) dependencies.
+# Noctalia clones the plugin from GitHub the first time it starts with network.
+# Languages, clipboard and notification options are under Settings -> Plugins
+# -> OCR; each language needs its tesseract-langpack-* package.
+enabled = ["fel/ocr"]
+
+# The plugin's bar widget: left click OCRs a region, right click the whole
+# output. It also has to be on the bar for Mod+Shift+T to work, since the
+# plugin handles IPC from the widget.
+[widget.ocr]
+type = "fel/ocr:ocr"
+
+[bar.default]
+# Noctalia's default `end` lane with `ocr` inserted before `clipboard`. A lane
+# set here replaces the built-in one, so this freezes the rest of the lane at
+# Noctalia 5's defaults; rearranging the bar in Settings overrides it anyway.
+end = ["media", "tray", "notifications", "ocr", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session"]

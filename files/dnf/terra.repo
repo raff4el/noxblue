@@ -1,14 +1,14 @@
-# Fyra Labs' Terra repository, used at build time for exactly one package:
-# noctalia-greeter, which Fedora does not carry.
+# Fyra Labs' Terra repository, used at build time for exactly two packages
+# Fedora does not carry: noctalia-greeter and starship.
 #
 # Three deliberate restrictions:
 #
 #   includepkgs  Terra ships ~5000 packages, many of them newer rebuilds of
-#                things Fedora already provides. Limiting it to
-#                noctalia-greeter means it cannot silently win a version
-#                comparison against a Fedora package. The greeter's only
-#                non-Fedora-satisfiable dependencies are dbus, greetd and
-#                wlroots >= 0.20, all of which are in Fedora 44.
+#                things Fedora already provides. Limiting it to these two
+#                means it cannot silently win a version comparison against a
+#                Fedora package. The greeter's only non-Fedora-satisfiable
+#                dependencies are dbus, greetd and wlroots >= 0.20, all of
+#                which are in Fedora 44; starship needs only glibc.
 #   priority     Belt and braces: even inside includepkgs, Fedora wins ties.
 #   releasever   Hardcoded rather than $releasever. The secureblue base does
 #                not necessarily report the version this image is built for.
@@ -28,5 +28,5 @@ enabled=1
 enabled_metadata=1
 metadata_expire=4h
 skip_if_unavailable=False
-includepkgs=noctalia-greeter
+includepkgs=noctalia-greeter starship
 priority=200

@@ -26,6 +26,7 @@
 | <kbd>Mod</kbd>+<kbd>R</kbd> / <kbd>F</kbd> / <kbd>Shift</kbd>+<kbd>F</kbd> | Column width / maximize / fullscreen |
 | <kbd>Print</kbd> | Screenshot (niri) |
 | <kbd>Shift</kbd>+<kbd>Print</kbd> | Screenshot region with annotation (Noctalia) |
+| <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> | OCR a region to the clipboard (Noctalia `fel/ocr`) |
 
 ## niri
 
@@ -41,6 +42,36 @@ Merges every `*.toml` in `~/.config/noctalia/`; GUI changes land in
 `~/.local/state/noctalia/settings.toml` and override them. The image ships
 `[shell] polkit_agent = true` via `/etc/skel`: secureblue has no `pkexec`, and
 `run0` needs an agent to show prompts outside a terminal.
+
+### OCR
+
+The `/etc/skel` config also enables the community plugin `fel/ocr` and puts its
+widget on the bar before the clipboard button (left click: region, right click:
+whole output). <kbd>Mod</kbd>+<kbd>Shift</kbd>+<kbd>T</kbd> goes through the
+widget, so it needs the widget on the bar. Noctalia clones the plugin from
+GitHub on first start. The image ships `grim`, `slurp`, `tesseract` and English
+data; other languages need `tesseract-langpack-<code>` in the recipe plus the
+code under **Settings → Plugins → OCR**.
+
+For an account that existed before this, copy the `[plugins]`, `[widget.ocr]`
+and `[bar.default]` tables from `/etc/skel/.config/noctalia/config.toml` into
+`~/.config/noctalia/`, or run `noctalia msg plugins enable fel/ocr` and add the
+widget through the bar's Add-widget picker.
+
+## Shell
+
+Alacritty opens **fish** through `/etc/alacritty/alacritty.toml`; the login
+shell stays bash, so `/etc/profile.d` still builds the session environment.
+Alacritty reads that file only when you have no config of your own: if you do,
+add `import = ["/etc/alacritty/alacritty.toml"]` or your own
+`[terminal.shell]`.
+
+`/usr/share/fish/vendor_conf.d/noxblue.fish` shows the login banner in place of
+fish's greeting and starts **Starship** with `/usr/share/noxblue/starship.toml`:
+OS, directory, git branch/state/status/line counts, toolbox/distrobox container,
+detected toolchains, command duration, exit status and time. Copy it to
+`~/.config/starship.toml` to customize; once that file exists the image's
+config is ignored.
 
 ## GTK applications
 

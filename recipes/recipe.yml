@@ -37,9 +37,9 @@ modules:
       cleanup: true
       files:
         # files/dnf/terra.repo. Fyra Labs' Terra, restricted with
-        # `includepkgs=noctalia-greeter` so it cannot shadow anything Fedora
-        # ships -- see the comments in that file. It is here for exactly one
-        # package: noctalia-greeter, which Fedora does not carry. Noctalia
+        # `includepkgs=noctalia-greeter starship` so it cannot shadow anything
+        # Fedora ships -- see the comments in that file. It is here for exactly
+        # two packages Fedora does not carry: noctalia-greeter and starship. Noctalia
         # itself comes from Fedora's own repos, so no COPR is needed at all.
         - terra.repo
       keys:
@@ -91,18 +91,33 @@ modules:
         # GTK 3 theme matching Adwaita dark. secureblue installs it on this
         # base already; listed so the gschema default below never dangles.
         - adw-gtk3-theme
-        # Userland
+        # Userland. fish is the shell Alacritty opens (/etc/alacritty), with
+        # Starship as its prompt; the login shell stays bash.
         - nu
+        - fish
         - alacritty
         - wl-clipboard
-        # The one package Fedora does not carry. It is listed here as an
-        # ordinary package rather than under a `repo: terra` entry on purpose:
-        # that form makes the module run `dnf install --repoid terra`, and
-        # --repoid *disables every other repository* for that transaction, so
-        # the greeter's dependencies (wlroots >= 0.20, dbus, greetd) become
-        # unresolvable. `includepkgs=noctalia-greeter` in files/dnf/terra.repo
-        # already guarantees Terra cannot supply anything else -- including its
-        # own older `noctalia` build -- so nothing is lost by dropping it.
+        # Noctalia's OCR plugin (fel/ocr, enabled in /etc/skel): it shells out
+        # to slurp for the region, grim for the capture and tesseract for the
+        # text. tesseract alone has no language data; each language in the
+        # plugin's settings needs its langpack. Add tesseract-langpack-deu etc.
+        # here for more.
+        - grim
+        - slurp
+        - tesseract
+        - tesseract-langpack-eng
+        # The packages Fedora does not carry, both from Terra (see
+        # files/dnf/terra.repo). Starship comes from Terra rather than as a
+        # GitHub release tarball so it is GPG-checked like everything else.
+        - starship
+        # Both are listed as ordinary packages rather than under a `repo: terra`
+        # entry on purpose: that form makes the module run `dnf install
+        # --repoid terra`, and --repoid *disables every other repository* for
+        # that transaction, so the greeter's dependencies (wlroots >= 0.20,
+        # dbus, greetd) become unresolvable. `includepkgs` in
+        # files/dnf/terra.repo already guarantees Terra cannot supply anything
+        # else -- including its own older `noctalia` build -- so nothing is
+        # lost by dropping it.
         - noctalia-greeter
     # The base's own session (sway, sddm, waybar, foot, swaylock, ...) stays
     # installed but unused: sddm is disabled below and nothing starts sway.

@@ -1,0 +1,173 @@
+# noxblue's default Starship prompt, used by fish when ~/.config/starship.toml
+# does not exist (see /usr/share/fish/vendor_conf.d/noxblue.fish). Copy it there
+# to change it: https://starship.rs/config/
+#
+# Colours are the terminal's named ANSI colours rather than hex, so the prompt
+# follows whatever palette Alacritty has, including Noctalia's generated one.
+# Glyphs are Nerd Font symbols; the image ships NerdFontsSymbolsOnly, which
+# fontconfig falls back to from any monospace font.
+#
+#   󰣛  ~/code/noxblue   main ⇡1 !2 +1 ?3  +12 -4          ⬢ toolbox  3s  14:02
+#   ❯
+
+"$schema" = "https://starship.rs/config-schema.json"
+
+add_newline = true
+command_timeout = 1000
+
+# Line 1: where you are and what git thinks of it, then everything else
+# Starship detects ($all: languages, toolchains, ...) pushed right by $fill.
+# Line 2: background jobs, exit status, the prompt character.
+format = """
+$os\
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_commit\
+$git_state\
+$git_status\
+$git_metrics\
+$fill\
+$all\
+$container\
+$cmd_duration\
+$time\
+$line_break\
+$jobs\
+$status\
+$character"""
+
+[fill]
+symbol = " "
+
+[os]
+disabled = false
+style = "bold blue"
+format = "[$symbol]($style) "
+
+[os.symbols]
+Fedora = "󰣛"
+Linux = ""
+
+# Only when it is not you on this machine: root, or over SSH.
+[username]
+style_user = "bold yellow"
+style_root = "bold red"
+format = "[$user]($style)"
+
+[hostname]
+ssh_symbol = " "
+style = "bold yellow"
+format = "[@$hostname $ssh_symbol]($style) "
+
+[directory]
+style = "bold cyan"
+read_only = " 󰌾"
+read_only_style = "red"
+truncation_length = 4
+truncation_symbol = "…/"
+truncate_to_repo = false
+repo_root_style = "bold underline cyan"
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[directory.substitutions]
+"~/Documents" = "󰈙 Documents"
+"~/Downloads" = " Downloads"
+"~/Pictures" = " Pictures"
+"~/code" = " code"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+[git_commit]
+tag_disabled = false
+tag_symbol = "  "
+style = "bold green"
+
+[git_state]
+style = "bold yellow"
+format = '\([$state( $progress_current/$progress_total)]($style)\) '
+
+[git_status]
+style = "bold red"
+format = "([$all_status$ahead_behind]($style) )"
+conflicted = "=${count} "
+ahead = "[⇡${count} ](green)"
+behind = "[⇣${count} ](yellow)"
+diverged = "[⇡${ahead_count}⇣${behind_count} ](yellow)"
+up_to_date = ""
+untracked = "[?${count} ](blue)"
+stashed = "[≡${count} ](cyan)"
+modified = "[!${count} ](yellow)"
+staged = "[+${count} ](green)"
+renamed = "[»${count} ](purple)"
+deleted = "[✘${count} ](red)"
+typechanged = ""
+
+[git_metrics]
+disabled = false
+added_style = "green"
+deleted_style = "red"
+format = "([+$added]($added_style) )([-$deleted]($deleted_style) )"
+
+# toolbox / distrobox, which is where most work happens on an atomic system.
+[container]
+symbol = "⬢"
+style = "bold red dimmed"
+format = "[$symbol $name]($style) "
+
+[cmd_duration]
+min_time = 2000
+style = "yellow"
+format = "[ $duration]($style) "
+show_notifications = false
+
+[time]
+disabled = false
+style = "dimmed white"
+format = "[ $time]($style)"
+time_format = "%H:%M"
+
+[jobs]
+symbol = ""
+style = "bold blue"
+number_threshold = 1
+format = "[$symbol$number]($style) "
+
+[status]
+disabled = false
+symbol = "✘ "
+not_executable_symbol = " "
+not_found_symbol = "󰍉 "
+sigint_symbol = "󰟾 "
+signal_symbol = "⚡"
+map_symbol = true
+pipestatus = true
+style = "bold red"
+format = "[$symbol$common_meaning$signal_name$maybe_int]($style) "
+pipestatus_format = "[$pipestatus]($style) "
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold green)"
+
+# Language modules keep Starship's defaults except for a few symbols that
+# render as emoji without them.
+[nodejs]
+symbol = " "
+
+[python]
+symbol = " "
+
+[rust]
+symbol = "󱘗 "
+
+[golang]
+symbol = " "
+
+[package]
+symbol = "󰏗 "

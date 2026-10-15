@@ -321,6 +321,13 @@ binds {
         spawn "noctalia" "msg" "screenshot-region";
     }
 
+    // Text from a screen region onto the clipboard: Noctalia's fel/ocr plugin
+    // and its bar widget, both set up in /etc/skel's Noctalia config. The plugin
+    // takes IPC through the widget, so this does nothing without it on the bar.
+    Mod+Shift+T hotkey-overlay-title="OCR Region to Clipboard" {
+        spawn "noctalia" "msg" "plugin" "fel/ocr:ocr" "all" "ocr-region";
+    }
+
     // Media keys through Noctalia, so its OSD shows the change.
     XF86AudioRaiseVolume allow-when-locked=true {
         spawn "noctalia" "msg" "volume-up" "3";

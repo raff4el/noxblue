@@ -1,0 +1,13 @@
+# noxblue: system-wide Alacritty defaults.
+#
+# Alacritty reads this only when you have no config of your own: it stops at
+# the first of ~/.config/alacritty/alacritty.toml, ~/.config/alacritty.toml,
+# ~/.alacritty.toml and this file. If you keep your own, copy the [terminal]
+# table into it, or `import = ["/etc/alacritty/alacritty.toml"]` at its top.
+#
+# fish is the shell inside the terminal, not the login shell. Login stays on
+# bash, so /etc/profile.d (Homebrew's PATH, the noxblue banner, ...) still sets
+# up the session environment that niri, Noctalia and fish all inherit; fish
+# itself never reads profile.d.
+[terminal.shell]
+program = "/usr/bin/fish"

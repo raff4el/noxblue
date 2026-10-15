@@ -22,7 +22,8 @@ screenshots, and it ships in Fedora's own repos: no COPRs.
 | **Compositor** | niri 26.04 |
 | **Shell** | Noctalia 5 |
 | **Login** | greetd + noctalia-greeter |
-| **Terminal** | Alacritty, Nushell |
+| **Terminal** | Alacritty, fish + Starship, Nushell |
+| **OCR** | Noctalia's `fel/ocr` plugin (grim, slurp, tesseract) |
 | **Extras** | Homebrew (secureblue's `brew-proxy`), Flathub (system + user), zram tuned for desktop use |
 | **Flatpaks** | Flatseal, Warehouse, Mission Center, Clapper, Loupe |
 
@@ -52,7 +53,8 @@ secureblue, its reject-by-default policy needs the key trusted first: see
   which blocked all automatic updates, so the image clears it. Updates are
   still verified against this repo's cosign signature.
 - **Fonts** (Nerd Fonts, Google Fonts) are downloaded unsigned at build time.
-- **Terra** supplies exactly one package at build time, `noctalia-greeter`,
+- **Terra** supplies exactly two packages at build time, `noctalia-greeter`
+  and `starship`,
   restricted with `includepkgs`, GPG-checked and removed from the finished
   image. See `files/dnf/terra.repo`.
 - **No Xwayland.** Add `xwayland-satellite` to the recipe for X11 apps.
